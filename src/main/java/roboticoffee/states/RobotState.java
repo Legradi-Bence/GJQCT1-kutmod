@@ -50,7 +50,7 @@ public class RobotState extends AbstractAppState {
         geom.setMaterial(mat);
         localRootNode.attachChild(geom);
 
-        setupKeys(app);
+        //setupKeys(app);
         
 
 
