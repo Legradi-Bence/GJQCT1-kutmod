@@ -1,5 +1,12 @@
 package roboticoffee.states;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import tonegod.gui.controls.text.TextField;
+import tonegod.gui.controls.windows.Panel;
+import tonegod.gui.core.Screen;
+
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
@@ -10,28 +17,41 @@ import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.event.KeyInputEvent;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
-import com.simsilica.lemur.*;
 import com.simsilica.lemur.component.QuadBackgroundComponent;
 import com.simsilica.lemur.event.KeyListener;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.style.BaseStyles;
 
+import roboticoffee.utils.TextArea;
+
 public class UIState extends AbstractAppState {
 
     private final Node rootNode;
     private final Node guiNode;
-    private Label label;
+    private TextArea textField;
 
     public UIState(SimpleApplication app) {
         rootNode = app.getRootNode();
         guiNode = app.getGuiNode();
     }
 
+    public String getText() {
+        return textField.getText();
+    }
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
 
+        Screen screen = new Screen(app);
+        
+        textField = new TextArea(screen,new Vector2f(20, 20), new Vector2f(300, 500));
+        screen.addElement(textField.getBasePanel());
+        guiNode.addControl(screen);
+
+
+/* 
         GuiGlobals.initialize(app);
         BaseStyles.loadGlassStyle();
         GuiGlobals.getInstance().getStyles().setDefaultStyle("glass");
@@ -43,8 +63,10 @@ public class UIState extends AbstractAppState {
         window.setLocalTranslation(20, 700, 0);
         label = new Label("");
         label.setPreferredSize(new Vector3f(300, 500, 0));
-        window.addChild(label);
+        window.addChild(label);*/
 
+
+/*
         InputManager inputManager = app.getInputManager();
         inputManager.addMapping("key_shift", new KeyTrigger(KeyInput.KEY_LSHIFT), new KeyTrigger(KeyInput.KEY_RSHIFT));
         inputManager.addMapping("key_ctrl", new KeyTrigger(KeyInput.KEY_LCONTROL), new KeyTrigger(KeyInput.KEY_RCONTROL));
@@ -113,10 +135,10 @@ public class UIState extends AbstractAppState {
                 "key_enter", "key_backspace", "key_1", "key_2", "key_3", "key_4", "key_5", "key_6", "key_7", "key_8", "key_9", "key_0", "key_slash", "key_period", "key_comma",
                 "key_minus", "key_plus", "key_divide", "key_multiply", "key_decimal", "key_num_0", "key_num_1", "key_num_2", "key_num_3", "key_num_4", "key_num_5", "key_num_6",
                 "key_num_7", "key_num_8", "key_num_9", "key_num_enter", "key_tab");
-
-        guiNode.attachChild(window);
+*/
+        //guiNode.attachChild(window);
     }
-
+/* 
     private boolean isShiftPressed = false;
     private boolean isControlPressed = false;
     private boolean isAltPressed = false;
@@ -138,6 +160,7 @@ public class UIState extends AbstractAppState {
             if (!isPressed) {
                 return;
             }
+
             switch (name) {
                 case "key_A":
                     label.setText(label.getText().concat(isShiftPressed ? "A" : "a"));
@@ -382,6 +405,6 @@ public class UIState extends AbstractAppState {
                     break;
             }
         }
-    };
+    };*/
 
 }
