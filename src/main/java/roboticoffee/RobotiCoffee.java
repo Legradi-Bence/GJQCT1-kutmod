@@ -38,15 +38,10 @@ public class RobotiCoffee extends SimpleApplication {
         stateManager.attach(new UIState(this));
 
     }
-    private float delta = 0;
 
     @Override
     public void simpleUpdate(float tpf) {
-        delta += tpf;
-        if (delta > 2) {
-            delta = 0;
-            System.out.println("str: " + stateManager.getState(UIState.class).getText());
-        }
+
     }
 
     @Override
