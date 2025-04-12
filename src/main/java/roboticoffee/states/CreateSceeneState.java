@@ -36,8 +36,9 @@ public class CreateSceeneState extends AbstractAppState {
 
         ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
 
-        app.getCamera().setLocation(new Vector3f(20, 30, -20));
-        app.getCamera().lookAt(new Vector3f(20, 0, 20), Vector3f.UNIT_Y);
+        app.getCamera().setLocation(new Vector3f(10, 15, -10));
+        app.getCamera().lookAt(new Vector3f(10, 0, 10), Vector3f.UNIT_Y);
+        
 
         rootNode.attachChild(localRootNode);
         Node Tiles = createTiles();
@@ -69,8 +70,9 @@ public class CreateSceeneState extends AbstractAppState {
         for (int j = 0; j < 20; j++) {
             for (int i = 0; i < 20; i++) {
                 Spatial tile = assetManager.loadModel("Models/Tile.glb");
+                tile.setLocalScale(0.5f, 0.5f, 0.5f);
                 tile.setMaterial(mat);
-                tile.setLocalTranslation(i * 2, 0, j * 2);
+                tile.setLocalTranslation(i, -0.1f, j);
                 tiles.attachChild(tile);
             }
         }

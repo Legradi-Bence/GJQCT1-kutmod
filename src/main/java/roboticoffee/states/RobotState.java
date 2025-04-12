@@ -15,6 +15,7 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 
 /**
@@ -43,12 +44,11 @@ public class RobotState extends AbstractAppState {
 
         rootNode.attachChild(localRootNode);
 
-        Box b = new Box(1, 1, 1);
-        Geometry geom = new Geometry("Robot", b);
-        geom.setLocalTranslation(0, 1, 0);
-        Material mat = assetManager.loadMaterial("Materials/SecondBaseMaterial.j3m");
-        geom.setMaterial(mat);
-        localRootNode.attachChild(geom);
+        Spatial robot = assetManager.loadModel("Models/Robot.glb");
+        //Material mat = assetManager.loadMaterial("Materials/SecondBaseMaterial.j3m");
+        //robot.setMaterial(mat);
+        robot.setLocalTranslation(0,0,0);
+        localRootNode.attachChild(robot);
 
         //setupKeys(app);
         
