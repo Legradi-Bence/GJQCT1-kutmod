@@ -1,13 +1,13 @@
 package roboticoffee.utils.Nodes;
 
 public class TurnStatementNode extends Node {
-    private final Node direction;
+    private final String direction;
 
-    public TurnStatementNode(Node direction) {
+    public TurnStatementNode(String direction) {
         this.direction = direction;
     }
 
-    public Node getDirection() {
+    public String getDirection() {
         return direction;
     }
 

@@ -18,13 +18,16 @@ public class UIState extends AbstractAppState {
 
     private final Node rootNode;
     private final Node guiNode;
-    private final static List<String> codeWindowNames = new ArrayList<>();
 
-    public UIState(SimpleApplication app) {
+    private final static List<String> codeWindowNames = new ArrayList<>();
+    private RobotState robotState;
+
+    public UIState(SimpleApplication app, RobotState robotState) {
 
         rootNode = app.getRootNode();
         guiNode = app.getGuiNode();
-        CodeWindowConrolGenerator generator = new CodeWindowConrolGenerator(app);
+        this.robotState = robotState;
+        CodeWindowConrolGenerator generator = new CodeWindowConrolGenerator(app, robotState);
         JavaFxUI.initialize(app);
 
         Button button = new Button("New Code Window");
@@ -43,6 +46,14 @@ public class UIState extends AbstractAppState {
 
     public static boolean isCodeWindowNameUnique(String name) {
         return !codeWindowNames.contains(name);
+    }
+
+    public static List<String> getCodeWindowNames() {
+        return codeWindowNames;
+    }
+
+    public static String getCode(String codeWindowName) {
+        return ((CodeWindowControl) JavaFxUI.getInstance().getChild(codeWindowName)).getCode();
     }
 
     @Override

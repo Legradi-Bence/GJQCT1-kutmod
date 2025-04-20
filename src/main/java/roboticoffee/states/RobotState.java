@@ -9,29 +9,27 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
-import com.jme3.input.KeyInput;
-import com.jme3.input.controls.ActionListener;
-import com.jme3.input.controls.KeyTrigger;
-import com.jme3.material.Material;
-import com.jme3.scene.Geometry;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.shape.Box;
+
+import roboticoffee.utils.Direction;
 
 /**
  *
  * @author Bence
  */
+
 public class RobotState extends AbstractAppState {
 
     private final Node rootNode;
     private final Node localRootNode = new Node("BaseRobotNode");
+    private Spatial robotNode = new Node("RobotNode");
     private final AssetManager assetManager;
     private Integer robotPosX = 0;
     private Integer robotPosZ = 0;
-
-
-
+    private Direction robotDirection = Direction.NORTH;
 
     public RobotState(SimpleApplication app) {
         rootNode = app.getRootNode();
@@ -43,50 +41,96 @@ public class RobotState extends AbstractAppState {
         super.initialize(stateManager, app);
 
         rootNode.attachChild(localRootNode);
-
-        Spatial robot = assetManager.loadModel("Models/Robot.glb");
-        //Material mat = assetManager.loadMaterial("Materials/SecondBaseMaterial.j3m");
-        //robot.setMaterial(mat);
-        robot.setLocalTranslation(0,0,0);
-        localRootNode.attachChild(robot);
-
-        //setupKeys(app);
-        
-
+        robotNode = assetManager.loadModel("Models/Robot.glb");
+        localRootNode.attachChild(robotNode);
+        turn("north");
 
     }
 
-    private void setupKeys(Application app) {
-        app.getInputManager().addMapping("MoveUp", new KeyTrigger(KeyInput.KEY_W));
-        app.getInputManager().addMapping("MoveDown", new KeyTrigger(KeyInput.KEY_S));
-        app.getInputManager().addMapping("MoveLeft", new KeyTrigger(KeyInput.KEY_A));
-        app.getInputManager().addMapping("MoveRight", new KeyTrigger(KeyInput.KEY_D));
-
-        app.getInputManager().addListener(actionListener, "MoveUp", "MoveDown", "MoveLeft", "MoveRight");
-    }
-
-    private final ActionListener actionListener = new ActionListener() {
-        @Override
-        public void onAction(String name, boolean isPressed, float tpf) {
-            if (!isPressed) {
-                return;
-            }
-
-            if (name.equals("MoveUp") && robotPosZ < 19) {
-                localRootNode.move(0, 0, 2);
-                robotPosZ++;
-            } else if (name.equals("MoveDown") && robotPosZ > 0) {
-                localRootNode.move(0, 0, -2);
-                robotPosZ--;
-            } else if (name.equals("MoveLeft") && robotPosX < 19) {
-                localRootNode.move(2, 0, 0);
-                robotPosX++;
-            } else if (name.equals("MoveRight") && robotPosX > 0) {
-                localRootNode.move(-2, 0, 0);
-                robotPosX--;
-            }
+    public void turn(String direction) {
+        switch (direction.toLowerCase()) {
+            case "right":
+                robotDirection = robotDirection.rotateRight();
+                break;
+            case "left":
+                robotDirection = robotDirection.rotateLeft();
+                break;
+            case "back":
+                robotDirection = robotDirection.rotateRight().rotateRight();
+                break;
+            case "north":
+                robotDirection = Direction.NORTH;
+                break;
+            case "east":
+                robotDirection = Direction.EAST;
+                break;
+            case "south":
+                robotDirection = Direction.SOUTH;
+                break;
+            case "west":
+                robotDirection = Direction.WEST;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid direction: " + direction);
         }
-    };
+
+        Quaternion rotation = getRotationForDirection(robotDirection);
+        robotNode.setLocalRotation(rotation);
+
+        System.out.println("Robot is now facing: " + robotDirection);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private Quaternion getRotationForDirection(Direction direction) {
+        switch (direction) {
+            case WEST:
+                return new Quaternion().fromAngleAxis(0, new com.jme3.math.Vector3f(0, 1, 0));
+            case SOUTH:
+                return new Quaternion().fromAngleAxis(FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0));
+            case EAST:
+                return new Quaternion().fromAngleAxis(FastMath.PI, new com.jme3.math.Vector3f(0, 1, 0));
+            case NORTH:
+                return new Quaternion().fromAngleAxis(-FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0));
+            default:
+                throw new IllegalArgumentException("Invalid direction: " + direction);
+        }
+    }
+
+    public void move(int steps) {
+        switch (robotDirection) {
+            case NORTH:
+                robotPosZ += steps;
+                break;
+            case SOUTH:
+                robotPosZ -= steps;
+                break;
+            case EAST:
+                robotPosX -= steps;
+                break;
+            case WEST:
+                robotPosX += steps;
+                break;
+        }
+        if (robotPosX < 0 || robotPosZ < 0 || robotPosX > 20 || robotPosZ > 20) {
+            System.out.println("Robot cannot move outside the grid!");
+            robotPosX = Math.max(0, Math.min(robotPosX, 20));
+            robotPosZ = Math.max(0, Math.min(robotPosZ, 20));
+        }
+        robotNode.setLocalTranslation(robotPosX, 0, robotPosZ);
+        System.out.println("Robot moved to position: (" + robotPosX + ", " + robotPosZ + ")");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
 
     @Override
     public void cleanup() {

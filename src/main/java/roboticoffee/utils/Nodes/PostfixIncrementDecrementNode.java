@@ -1,15 +1,15 @@
 package roboticoffee.utils.Nodes;
 
 public class PostfixIncrementDecrementNode extends Node {
-    private Node variable;
+    private String variable;
     private String operator;
 
-    public PostfixIncrementDecrementNode(Node variable, String operator) {
+    public PostfixIncrementDecrementNode(String variable, String operator) {
         this.variable = variable;
         this.operator = operator;
     }
 
-    public Node getVariable() {
+    public String getVariable() {
         return variable;
     }
 

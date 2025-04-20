@@ -1,13 +1,15 @@
 package roboticoffee.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import roboticoffee.utils.Nodes.DeclarationNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
 import roboticoffee.utils.Nodes.BlockNode;
-import roboticoffee.utils.Nodes.DirectionNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
+import roboticoffee.utils.Nodes.FunctionNode;
 import roboticoffee.utils.Nodes.IdentifierNode;
 import roboticoffee.utils.Nodes.IfStatementNode;
 import roboticoffee.utils.Nodes.MoveStatementNode;
@@ -37,16 +39,25 @@ public class Parser {
 
     private Node parseStatement() {
         Token current = peek();
-        if (current.getType() == TokenType.KEYWORD && current.getValue().equals("if")) {
-            return parseIfStatement();
-        } else if (current.getType() == TokenType.KEYWORD && current.getValue().equals("for")) {
-            return parseForStatement();
-        } else if (current.getType() == TokenType.KEYWORD && current.getValue().equals("while")) {
-            return parseWhileStatement();
-        } else if (current.getType() == TokenType.KEYWORD && current.getValue().equals("move")) {
-            return parseMoveStatement();
-        } else if (current.getType() == TokenType.KEYWORD && current.getValue().equals("turn")) {
-            return parseTurnStatement();
+        if (current.getType() == TokenType.KEYWORD) {
+            switch (current.getValue()) {
+                case "int", "string", "boolean":
+                    return parseAssignment();
+                case "if":
+                    return parseIfStatement();
+                case "for":
+                    return parseForStatement();
+                case "while":
+                    return parseWhileStatement();
+                case "move":
+                    return parseMoveStatement();
+                case "turn":
+                    return parseTurnStatement();
+                case "function":
+                    return parseFunction();
+                default:
+                    throw new IllegalArgumentException("Unexpected keyword: " + current.getValue());
+            }
         } else {
             return parseExpressionStatement();
         }
@@ -55,7 +66,20 @@ public class Parser {
     private Node parseExpressionStatement() {
         Node expression = parseExpression();
         consume(TokenType.SEMICOLON, ";");
+        if (expression instanceof BinaryExpressionNode) {
+            BinaryExpressionNode binaryExpressionNode = (BinaryExpressionNode) expression;
+            if (binaryExpressionNode.getOperator().equals("=")) {
+
+                return new AssignmentNode(((IdentifierNode) binaryExpressionNode.getLeft()).getIdentifier(), "=", binaryExpressionNode.getRight());
+            }
+        }
         return new ExpressionStatementNode(expression);
+    }
+    private Node parseFunction() {
+        consume(TokenType.KEYWORD, "function");
+        Token functionName = consume(TokenType.IDENTIFIER, null);
+        consume(TokenType.SEMICOLON, ";");
+        return new FunctionNode(functionName.getValue());
     }
 
     private Node parseWhileStatement() {
@@ -70,11 +94,18 @@ public class Parser {
     private Node parseForStatement() {
         consume(TokenType.KEYWORD, "for");
         consume(TokenType.OPEN_PAREN, "(");
+
         Node initialization = parseAssignment();
+
         Node condition = parseCondition();
+        consume(TokenType.SEMICOLON, ";");
+
         Node increment = parseExpression();
+
         consume(TokenType.CLOSE_PAREN, ")");
+
         Node body = parseBlock();
+
         return new ForStatementNode(initialization, condition, increment, body);
     }
 
@@ -92,16 +123,19 @@ public class Parser {
         consume(TokenType.OPEN_PAREN, "(");
         Node expression = parseExpression();
         consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
         return new MoveStatementNode(expression);
     }
 
     private Node parseTurnStatement() {
         consume(TokenType.KEYWORD, "turn");
         consume(TokenType.OPEN_PAREN, "(");
-        Node direction = parseDirection();
+        String direction = parseDirection();
         consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
         return new TurnStatementNode(direction);
     }
+
 
     private Node parseExpression() {
         return parseExpressionWithPrecedence(0);
@@ -113,8 +147,16 @@ public class Parser {
         // Prefix operátorok kezelése
         if (isOperator(current) && (current.getValue().equals("++") || current.getValue().equals("--"))) {
             Token operator = advance();
-            Node operand = parseExpressionWithPrecedence(1);
-            return new PrefixIncrementDecrementNode(operator.getValue(), operand);
+
+            // Ellenőrizzük, hogy az operandus egy változó (IDENTIFIER)
+            Token operandToken = peek();
+            if (operandToken.getType() != TokenType.IDENTIFIER) {
+                throw new IllegalArgumentException("Expected a variable name after " + operator.getValue() + ", but found: " + operandToken.getValue());
+            }
+
+            // Létrehozzuk az IdentifierNode-t a változó nevével
+            IdentifierNode operand = new IdentifierNode(advance().getValue());
+            return new PrefixIncrementDecrementNode(operator.getValue(), operand.getIdentifier());
         }
 
         Node left = parsePrimary();
@@ -137,7 +179,7 @@ public class Parser {
         if (current.getType() == TokenType.NUMBER) {
             return new NumberNode(current.getValue());
         } else if (current.getType() == TokenType.IDENTIFIER) {
-            Node identifier = new IdentifierNode(current.getValue());
+            IdentifierNode identifier = new IdentifierNode(current.getValue());
             // Ellenőrizzük, hogy van-e postfix operátor
             if (!isAtEnd() && peek().getType() == TokenType.OPERATOR && (peek().getValue().equals("++") || peek().getValue().equals("--"))) {
                 return parsePostfixIncrementOrDecrement(identifier);
@@ -181,30 +223,33 @@ public class Parser {
                 || operator.getValue().equals("/=");
     }
 
-    private Node parsePostfixIncrementOrDecrement(Node identifier) {
+    private Node parsePostfixIncrementOrDecrement(IdentifierNode identifier) {
         Token operator = advance(); // ++ vagy --
         if (operator.getValue().equals("++") || operator.getValue().equals("--")) {
-            return new PostfixIncrementDecrementNode(identifier, operator.getValue());
-        }
-        throw new IllegalArgumentException("Expected '++' or '--', but found: " + operator.getValue());
-    }
-
-    private Node parsePrefixIncrementOrDecrement() {
-        Token operator = advance(); // ++ vagy --
-        Node identifier = parsePrimary();
-        if (operator.getValue().equals("++") || operator.getValue().equals("--")) {
-            return new PrefixIncrementDecrementNode(operator.getValue(), identifier);
+            return new PostfixIncrementDecrementNode(identifier.getIdentifier(), operator.getValue());
         }
         throw new IllegalArgumentException("Expected '++' or '--', but found: " + operator.getValue());
     }
 
     private Node parseAssignment() {
+        Token typeToken = null;
+        if (check(TokenType.KEYWORD) && (peek().getValue().equals("int") || peek().getValue().equals("string") || peek().getValue().equals("boolean"))) {
+            typeToken = advance();
+        }
         Token identifier = consume(TokenType.IDENTIFIER, null);
         Token operator = advance();
-        if (operator.getValue().equals("=") || operator.getValue().equals("+=") || operator.getValue().equals("-=") || operator.getValue().equals("*=")
-                || operator.getValue().equals("/=")) {
+        if (operator.getValue().equals("=")) {
             Node value = parseExpression();
-            return new AssignmentNode(identifier.getValue(), operator.getValue(), value);
+            consume(TokenType.SEMICOLON, ";");
+            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value);
+        } else if (operator.getValue().equals("+=") || operator.getValue().equals("-=") || operator.getValue().equals("*=") || operator.getValue().equals("/=")) {
+            if (typeToken.getValue() != "int") {
+                throw new IllegalArgumentException("Type " + typeToken.getValue() + " is not allowed for " + operator.getValue());
+            }
+            Node value = parseExpression();
+            consume(TokenType.SEMICOLON, ";");
+            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value);
+
         }
         throw new IllegalArgumentException("Expected assignment operator, but found: " + operator.getValue());
     }
@@ -221,24 +266,27 @@ public class Parser {
 
     private Node parseCondition() {
 
-        Node left = parseExpression(); // Számra kiértékelhető kifejezés
-        if (isBooleanOperator(peek())) {
-            Token operator = advance();
-            Node right = parseExpression(); // Számra kiértékelhető kifejezés
-            return new BinaryExpressionNode(left, operator.getValue(), right);
+        Node cond = parseExpression();
+        if (cond instanceof BinaryExpressionNode) {
+            BinaryExpressionNode binaryExpressionNode = (BinaryExpressionNode) cond;
+            if (isBooleanOperator(binaryExpressionNode.getOperator())) {
+                return cond;
+            } else {
+                throw new IllegalArgumentException("Expected a boolean expression, but found: " + binaryExpressionNode.getOperator());
+            }
+
         }
         throw new IllegalArgumentException("Expected a boolean expression, but found: " + peek());
     }
 
-    private boolean isBooleanOperator(Token token) {
-        return token.getValue().equals("<") || token.getValue().equals(">") || token.getValue().equals("<=") || token.getValue().equals(">=") || token.getValue().equals("==")
-                || token.getValue().equals("!=");
+    private boolean isBooleanOperator(String operator) {
+        return operator.equals("<") || operator.equals(">") || operator.equals("<=") || operator.equals(">=") || operator.equals("==") || operator.equals("!=");
     }
 
-    private Node parseDirection() {
+    private String parseDirection() {
         Token current = advance();
         if (current.getType() == TokenType.KEYWORD && isDirection(current.getValue())) {
-            return new DirectionNode(current.getValue());
+            return current.getValue();
         }
         throw new IllegalArgumentException("Invalid direction: " + current.getValue());
     }
@@ -279,7 +327,7 @@ public class Parser {
     }
 
     private Token consume(TokenType type, String value) {
-        if (check(type) && peek().getValue().equals(value)) {
+        if (check(type) && (value == null || peek().getValue().equals(value))) {
             return advance();
         } else {
             throw new IllegalArgumentException("Expected " + value + " but found " + peek());

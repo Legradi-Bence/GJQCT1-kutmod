@@ -34,8 +34,9 @@ public class RobotiCoffee extends SimpleApplication {
         stateManager.detach(stateManager.getState(com.jme3.app.DebugKeysAppState.class));
 
         stateManager.attach(new CreateSceeneState(this));
-        stateManager.attach(new RobotState(this));
-        stateManager.attach(new UIState(this));
+        RobotState robotState = new RobotState(this);
+        stateManager.attach(robotState);
+        stateManager.attach(new UIState(this, robotState));
 
     }
 

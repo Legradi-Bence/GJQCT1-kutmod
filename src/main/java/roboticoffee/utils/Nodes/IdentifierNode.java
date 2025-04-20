@@ -12,11 +12,5 @@ public class IdentifierNode extends Node {
         return identifier;
     }
 
-    @Override
-    public String toString() {
-        return "IdentifierNode{" +
-                "identifier='" + identifier + '\'' +
-                '}';
-    }
 
 }

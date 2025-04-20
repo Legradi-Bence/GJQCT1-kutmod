@@ -10,14 +10,18 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import roboticoffee.states.RobotState;
+import roboticoffee.utils.Nodes.ProgramNode;
 
 public class CodeWindowControl extends StackPane {
 
     private double mouseX, mouseY;
     private TextArea textArea;
     private String name;
+    private RobotState robotState;
 
-    public CodeWindowControl(String name) {
+    public CodeWindowControl(String name, RobotState robotState) {
+        this.robotState = robotState;
         this.name = name;
         Label label = new Label(name);
         Button button = new Button("Run");
@@ -65,12 +69,17 @@ public class CodeWindowControl extends StackPane {
     private void onRunButtonClicked() {
         Lexer lexer = new Lexer(textArea.getText());
         List<Token> tokens = lexer.tokenize();
-        for (Token token : tokens) {
-            System.out.println(token.getType() + ": " + token.getValue());
-        }
+        Parser parser = new Parser(tokens);
+        ProgramNode programNode = parser.parse();
+        Interpreter interpreter = new Interpreter(name, robotState);
+        interpreter.execute(programNode);
+
     }
 
     public String getName() {
         return name;
+    }
+    public String getCode() {
+        return textArea.getText();
     }
 }

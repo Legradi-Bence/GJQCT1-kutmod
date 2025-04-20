@@ -11,9 +11,9 @@ public class Lexer {
     private int position = 0;
     private int line = 1;
     private int inlinePosition = 0;
-    private static final Set<String> KEYWORDS = Set.of("if", "else", "while", "for", "return", "int", "float", "boolean", "move", "turn", "true", "false", "north", "south", "east",
-            "west", "left","right", "back");
-    private static final Set<String> OPERATORS = Set.of("+", "-", "*", "/", "=", "==", "!=", "++","--", "+=", "-=", "*=", "/=", "&&", "||", "!", "<", ">", "<=", ">=");
+    private static final Set<String> KEYWORDS = Set.of("if", "else", "while", "for", "return", "int", "string", "boolean", "move", "turn", "true", "false", "north", "south", "east",
+            "west", "left","right", "back", "function");
+    private static final Set<String> OPERATORS = Set.of("+", "-", "*", "/", "%", "=", "==", "!=", "++","--", "+=", "-=", "*=", "/=", "&&", "||", "!", "<", ">", "<=", ">=");
 
     public Lexer(String input) {
         this.input = input;
@@ -42,6 +42,10 @@ public class Lexer {
 
             if (Character.isLetter(currentChar)) {
                 tokens.add(lexString());
+                continue;
+            }
+            if (currentChar == '"') {
+                tokens.add(lexStringValue());
                 continue;
             }
             Token operatorToken = lexOperator();
@@ -118,9 +122,22 @@ public class Lexer {
         }
         String identifier = input.substring(start, position);
         if (KEYWORDS.contains(identifier)) {
+            if (identifier.equals("true") || identifier.equals("false")) {
+                return new Token(TokenType.BOOLEAN, identifier);
+            }
             return new Token(TokenType.KEYWORD, identifier);
         }
         return new Token(TokenType.IDENTIFIER, identifier);
+    }
+
+    private Token lexStringValue() {
+        position++;
+        int start = position;
+        while (position < input.length() && input.charAt(position) != '"') {
+            position++;
+        }
+        String value = input.substring(start, position);
+        return new Token(TokenType.STRING, value);
     }
 
     private Token lexOperator() {
