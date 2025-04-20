@@ -116,15 +116,15 @@ public class RobotState extends AbstractAppState {
                 robotPosX += steps;
                 break;
         }
-        if (robotPosX < 0 || robotPosZ < 0 || robotPosX > 20 || robotPosZ > 20) {
+        if (robotPosX < 0 || robotPosZ < 0 || robotPosX > 19 || robotPosZ > 19) {
             System.out.println("Robot cannot move outside the grid!");
-            robotPosX = Math.max(0, Math.min(robotPosX, 20));
-            robotPosZ = Math.max(0, Math.min(robotPosZ, 20));
+            robotPosX = Math.max(0, Math.min(robotPosX, 19));
+            robotPosZ = Math.max(0, Math.min(robotPosZ, 19));
         }
         robotNode.setLocalTranslation(robotPosX, 0, robotPosZ);
         System.out.println("Robot moved to position: (" + robotPosX + ", " + robotPosZ + ")");
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
