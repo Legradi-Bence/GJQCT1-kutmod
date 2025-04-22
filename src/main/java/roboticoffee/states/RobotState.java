@@ -4,6 +4,9 @@
  */
 package roboticoffee.states;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
@@ -15,6 +18,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
 import roboticoffee.utils.Direction;
+import roboticoffee.utils.Rectangle;
 
 /**
  *
@@ -23,6 +27,7 @@ import roboticoffee.utils.Direction;
 
 public class RobotState extends AbstractAppState {
 
+    private final SimpleApplication simpleApp;
     private final Node rootNode;
     private final Node localRootNode = new Node("BaseRobotNode");
     private Spatial robotNode = new Node("RobotNode");
@@ -30,20 +35,28 @@ public class RobotState extends AbstractAppState {
     private Integer robotPosX = 0;
     private Integer robotPosZ = 0;
     private Direction robotDirection = Direction.NORTH;
+    private final List<Rectangle> validAreas = new ArrayList<>();
 
     public RobotState(SimpleApplication app) {
+        simpleApp = app;
         rootNode = app.getRootNode();
         assetManager = app.getAssetManager();
+        validAreas.add(new Rectangle(0, 0, 5, 1));
+        validAreas.add(new Rectangle(6, 0, 16, 10));
+        validAreas.add(new Rectangle(1, 3, 5, 4));
     }
 
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
 
-        rootNode.attachChild(localRootNode);
-        robotNode = assetManager.loadModel("Models/Robot.glb");
-        localRootNode.attachChild(robotNode);
-        turn("north");
+        simpleApp.enqueue(() -> {
+            rootNode.attachChild(localRootNode);
+            robotNode = assetManager.loadModel("Models/Robot.glb");
+            localRootNode.attachChild(robotNode);
+            turn("north");
+            return null;
+        });
 
     }
 
@@ -75,61 +88,72 @@ public class RobotState extends AbstractAppState {
         }
 
         Quaternion rotation = getRotationForDirection(robotDirection);
-        robotNode.setLocalRotation(rotation);
 
-        System.out.println("Robot is now facing: " + robotDirection);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        simpleApp.enqueue(() -> {
+            robotNode.setLocalRotation(rotation);
+            return null;
+        });
     }
 
     private Quaternion getRotationForDirection(Direction direction) {
         switch (direction) {
             case WEST:
-                return new Quaternion().fromAngleAxis(0, new com.jme3.math.Vector3f(0, 1, 0));
-            case SOUTH:
-                return new Quaternion().fromAngleAxis(FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0));
-            case EAST:
                 return new Quaternion().fromAngleAxis(FastMath.PI, new com.jme3.math.Vector3f(0, 1, 0));
-            case NORTH:
+            case SOUTH:
                 return new Quaternion().fromAngleAxis(-FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0));
+            case EAST:
+                return new Quaternion().fromAngleAxis(0, new com.jme3.math.Vector3f(0, 1, 0));
+            case NORTH:
+                return new Quaternion().fromAngleAxis(FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0));
             default:
                 throw new IllegalArgumentException("Invalid direction: " + direction);
         }
     }
 
     public void move(int steps) {
-        switch (robotDirection) {
-            case NORTH:
-                robotPosZ += steps;
-                break;
-            case SOUTH:
-                robotPosZ -= steps;
-                break;
-            case EAST:
-                robotPosX -= steps;
-                break;
-            case WEST:
-                robotPosX += steps;
-                break;
-        }
-        if (robotPosX < 0 || robotPosZ < 0 || robotPosX > 19 || robotPosZ > 19) {
-            System.out.println("Robot cannot move outside the grid!");
-            robotPosX = Math.max(0, Math.min(robotPosX, 19));
-            robotPosZ = Math.max(0, Math.min(robotPosZ, 19));
-        }
-        robotNode.setLocalTranslation(robotPosX, 0, robotPosZ);
-        System.out.println("Robot moved to position: (" + robotPosX + ", " + robotPosZ + ")");
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        int newX = robotPosX;
+        int newZ = robotPosZ;
+        for (int i = 0; i < steps; i++) {
+            // Egyesével lépj a megadott irányba
+            switch (robotDirection) {
+                case NORTH:
+                    newZ++;
+                    break;
+                case SOUTH:
+                    newZ--;
+                    break;
+                case EAST:
+                    newX--;
+                    break;
+                case WEST:
+                    newX++;
+                    break;
+            }
 
+            // Ellenőrizd az aktuális pozíciót
+            if (!isPositionValid(newX, newZ)) {
+                System.out.println("Cannot move to position: (" + newX + ", " + newZ + "). Obstacle detected!");
+                break;
+            }
+            else {
+                robotPosX = newX;
+                robotPosZ = newZ;
+            }
+        }
+        simpleApp.enqueue(() -> {
+            robotNode.setLocalTranslation(robotPosX, 0, robotPosZ);
+            return null;
+        });
+
+    }
+    
+    private boolean isPositionValid(int x, int z) {
+        for (Rectangle area : validAreas) {
+            if (area.contains(x, z)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

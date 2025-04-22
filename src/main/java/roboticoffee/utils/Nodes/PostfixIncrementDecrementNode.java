@@ -4,7 +4,8 @@ public class PostfixIncrementDecrementNode extends Node {
     private String variable;
     private String operator;
 
-    public PostfixIncrementDecrementNode(String variable, String operator) {
+    public PostfixIncrementDecrementNode(String variable, String operator, int lineNumber) {
+        super(lineNumber);
         this.variable = variable;
         this.operator = operator;
     }

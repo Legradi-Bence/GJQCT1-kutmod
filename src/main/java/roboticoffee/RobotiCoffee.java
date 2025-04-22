@@ -1,5 +1,7 @@
 package roboticoffee;
 
+import java.util.Map;
+
 import com.jme3.app.SimpleApplication;
 import com.jme3.renderer.RenderManager;
 import com.jme3.system.AppSettings;
@@ -39,10 +41,8 @@ public class RobotiCoffee extends SimpleApplication {
         stateManager.attach(new UIState(this, robotState));
 
     }
-
     @Override
     public void simpleUpdate(float tpf) {
-
     }
 
     @Override

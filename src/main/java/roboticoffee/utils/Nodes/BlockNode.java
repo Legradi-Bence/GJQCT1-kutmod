@@ -6,7 +6,8 @@ import java.util.List;
 public class BlockNode extends Node {
     private final List<Node> statements;
 
-    public BlockNode() {
+    public BlockNode(int lineNumber) {
+        super(lineNumber);
         this.statements = new ArrayList<>();
     }
 

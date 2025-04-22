@@ -4,7 +4,8 @@ public class IdentifierNode extends Node {
 
     private String identifier;
 
-    public IdentifierNode(String identifier) {
+    public IdentifierNode(String identifier, int lineNumber) {
+        super(lineNumber);
         this.identifier = identifier;
     }
 

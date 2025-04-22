@@ -5,7 +5,8 @@ public class IfStatementNode extends Node {
     private Node condition;
     private Node thenBlock;
 
-    public IfStatementNode(Node condition, Node thenNode) {
+    public IfStatementNode(Node condition, Node thenNode, int lineNumber) {
+        super(lineNumber);
         this.condition = condition;
         this.thenBlock = thenNode;
     }

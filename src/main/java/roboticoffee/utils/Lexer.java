@@ -56,7 +56,7 @@ public class Lexer {
             Token tk = null;
             switch (currentChar) {
                 case '(':
-                    tk = new Token(TokenType.OPEN_PAREN, "(");
+                    tk = new Token(TokenType.OPEN_PAREN, "(", line);
                     tokens.add(tk);
                     stack.push(tk);
                     break;
@@ -65,10 +65,10 @@ public class Lexer {
                         System.out.println("Unmatched closing parenthesis at line " + line + ", position " + inlinePosition);
                         //throw new IllegalArgumentException("Unmatched closing parenthesis at position " + position);
                     }
-                    tokens.add(new Token(TokenType.CLOSE_PAREN, ")"));
+                    tokens.add(new Token(TokenType.CLOSE_PAREN, ")", line));
                     break;
                 case '{':
-                    tk = new Token(TokenType.OPEN_BRACE, "{");
+                    tk = new Token(TokenType.OPEN_BRACE, "{", line);
                     tokens.add(tk);
                     stack.push(tk);
                     break;
@@ -77,10 +77,10 @@ public class Lexer {
                         System.out.println("Unmatched closing brace at line " + line + ", position " + inlinePosition);
                         //throw new IllegalArgumentException("Unmatched closing brace at position " + position);
                     }
-                    tokens.add(new Token(TokenType.CLOSE_BRACE, "}"));
+                    tokens.add(new Token(TokenType.CLOSE_BRACE, "}", line));
                     break;
                 case '[':
-                    tk = new Token(TokenType.OPEN_BRACKET, "[");
+                    tk = new Token(TokenType.OPEN_BRACKET, "[", line);
                     tokens.add(tk);
                     stack.push(tk);
                     break;
@@ -89,13 +89,13 @@ public class Lexer {
                         System.out.println("Unmatched closing bracket at line " + line + ", position " + inlinePosition);
                         //throw new IllegalArgumentException("Unmatched closing bracket at position " + position);
                     }
-                    tokens.add(new Token(TokenType.CLOSE_BRACKET, "]"));
+                    tokens.add(new Token(TokenType.CLOSE_BRACKET, "]", line));
                     break;
                 case ';':
-                    tokens.add(new Token(TokenType.SEMICOLON, ";"));
+                    tokens.add(new Token(TokenType.SEMICOLON, ";", line));
                     break;
                 default:
-                    tokens.add(new Token(TokenType.UNKNOWN, String.valueOf(currentChar)));
+                    tokens.add(new Token(TokenType.UNKNOWN, String.valueOf(currentChar), line));
             }
             position++;
         }
@@ -112,7 +112,7 @@ public class Lexer {
             position++;
         }
         String number = input.substring(start, position);
-        return new Token(TokenType.NUMBER, number);
+        return new Token(TokenType.NUMBER, number, line);
     }
 
     private Token lexString() {
@@ -123,11 +123,11 @@ public class Lexer {
         String identifier = input.substring(start, position);
         if (KEYWORDS.contains(identifier)) {
             if (identifier.equals("true") || identifier.equals("false")) {
-                return new Token(TokenType.BOOLEAN, identifier);
+                return new Token(TokenType.BOOLEAN, identifier, line);
             }
-            return new Token(TokenType.KEYWORD, identifier);
+            return new Token(TokenType.KEYWORD, identifier, line);
         }
-        return new Token(TokenType.IDENTIFIER, identifier);
+        return new Token(TokenType.IDENTIFIER, identifier, line);
     }
 
     private Token lexStringValue() {
@@ -137,7 +137,7 @@ public class Lexer {
             position++;
         }
         String value = input.substring(start, position);
-        return new Token(TokenType.STRING, value);
+        return new Token(TokenType.STRING, value, line);
     }
 
     private Token lexOperator() {
@@ -146,7 +146,7 @@ public class Lexer {
                 String potentialOperator = input.substring(position, position + length);
                 if (OPERATORS.contains(potentialOperator)) {
                     position += length;
-                    return new Token(TokenType.OPERATOR, potentialOperator);
+                    return new Token(TokenType.OPERATOR, potentialOperator, line);
                 }
             }
         }

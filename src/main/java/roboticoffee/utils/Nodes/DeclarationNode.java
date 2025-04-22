@@ -7,7 +7,8 @@ public class DeclarationNode extends Node {
     private String operator;
     private Node value;
 
-    public DeclarationNode(String type, String identifier, String operator, Node value) {
+    public DeclarationNode(String type, String identifier, String operator, Node value, int lineNumber) {
+        super(lineNumber);
         this.type = type;
         this.identifier = identifier;
         this.operator = operator;

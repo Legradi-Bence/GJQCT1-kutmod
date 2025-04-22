@@ -7,7 +7,8 @@ public class ProgramNode extends Node {
 
     private List<Node> statements;
 
-    public ProgramNode() {
+    public ProgramNode(int lineNumber) {
+        super(lineNumber);
         this.statements = new ArrayList<>();
     }
 

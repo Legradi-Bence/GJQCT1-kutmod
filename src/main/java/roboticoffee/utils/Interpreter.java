@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import javafx.application.Platform;
 import roboticoffee.states.RobotState;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
 import roboticoffee.utils.Nodes.BlockNode;
+import roboticoffee.utils.Nodes.BooleanNode;
 import roboticoffee.utils.Nodes.DeclarationNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
@@ -21,19 +23,36 @@ import roboticoffee.utils.Nodes.NumberNode;
 import roboticoffee.utils.Nodes.PostfixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.PrefixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.ProgramNode;
+import roboticoffee.utils.Nodes.StringNode;
 import roboticoffee.utils.Nodes.TurnStatementNode;
 import roboticoffee.utils.Nodes.WhileStatementNode;
 
 public class Interpreter {
     private RobotState robotState;
+    private CodeWindowControl codeWindowControl;
     private Stack<HashMap<String, Object>> scopeStack = new Stack<>();
     private final Map<String, Node> functionCache = new HashMap<>();
     private String functionName;
+    private ProgramStatus programState = ProgramStatus.STOPPED;
+    private long delay = 500;
 
-    public Interpreter(String functionName, RobotState robotState) {
+    public Interpreter(String functionName, RobotState robotState, CodeWindowControl codeWindowControl) {
+        this.codeWindowControl = codeWindowControl;
         this.functionName = functionName;
         this.robotState = robotState;
     }
+    public void setDelay(long delay) {
+        this.delay = delay;
+    }
+
+    public ProgramStatus getProgramStatus() {
+        return programState;
+    }
+
+    public void setProgramStatus(ProgramStatus state) {
+        this.programState = state;
+    }
+
     private void enterScope() {
         scopeStack.push(new HashMap<>());
     }
@@ -79,6 +98,26 @@ public class Interpreter {
     }
 
     public void execute(Node node) {
+
+        Platform.runLater(() -> codeWindowControl.highlightLine(node.getLineNumber()));
+
+        if (programState == ProgramStatus.STOPPED) {
+            scopeStack.clear();
+            functionCache.clear();
+            Thread.currentThread().interrupt();
+            return;
+        }
+
+        while (programState == ProgramStatus.PAUSED) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+
+
         if (node instanceof ProgramNode) {
             execute((ProgramNode) node);
         } else if (node instanceof BlockNode) {
@@ -102,7 +141,7 @@ public class Interpreter {
         } else if (node instanceof FunctionNode) {
             execute((FunctionNode) node);
         } else {
-            throw new IllegalArgumentException("Invalid node type: " + node.getClass().getName());
+            evaluate(node);
         }
     }
 
@@ -203,10 +242,22 @@ public class Interpreter {
     }
 
     private void execute(TurnStatementNode turnStatementNode) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
         robotState.turn(turnStatementNode.getDirection());
     }
 
     private void execute(MoveStatementNode moveStatementNode) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
         if (evaluate(moveStatementNode.getDistance()) instanceof Number) {
             robotState.move(((Number) evaluate(moveStatementNode.getDistance())).intValue());
         }
@@ -228,21 +279,17 @@ public class Interpreter {
     }
 
     private void execute(ForStatementNode forStatementNode) {
-        // Belépünk egy új scope-ba
         enterScope();
 
         try {
-            // Inicializálás
             DeclarationNode declarationNode = (DeclarationNode) forStatementNode.getInitializer();
             evaluate(declarationNode);
 
-            // Feltétel ellenőrzése
             Object conditionResult = evaluate(forStatementNode.getCondition());
             if (!(conditionResult instanceof Boolean)) {
                 throw new IllegalArgumentException("For loop condition must evaluate to a boolean");
             }
 
-            // Ciklus végrehajtása
             while ((boolean) conditionResult) {
                 execute(forStatementNode.getBody());
                 evaluate(forStatementNode.getIterator());
@@ -276,7 +323,7 @@ public class Interpreter {
                 newValue--;
             }
             changeVariable(variableName, newValue);
-            return oldValue; // Postfix: visszaadjuk a régi értéket
+            return oldValue;
         } else {
             throw new IllegalArgumentException("Variable is not a number: " + variableName);
         }
@@ -471,6 +518,12 @@ public class Interpreter {
     private Object evaluate(NumberNode numberNode) {
         return numberNode.getValue();
     }
+    private Object evaluate(BooleanNode booleanNode) {
+        return booleanNode.getValue();
+    }
+    private Object evaluate(StringNode stringNode) {
+        return stringNode.getValue();
+    }
 
     private Object evaluate(Node node) {
         if (node instanceof NumberNode) {
@@ -487,7 +540,12 @@ public class Interpreter {
             return evaluate((PrefixIncrementDecrementNode) node);
         } else if (node instanceof PostfixIncrementDecrementNode) {
             return evaluate((PostfixIncrementDecrementNode) node);
-        } else {
+        } else if (node instanceof BooleanNode) {
+            return evaluate((BooleanNode) node);
+        } else if (node instanceof StringNode) {
+            return evaluate((StringNode) node);
+        }
+        else {
             throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
         }
     }

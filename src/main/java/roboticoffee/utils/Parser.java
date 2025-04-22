@@ -7,6 +7,7 @@ import roboticoffee.utils.Nodes.DeclarationNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
 import roboticoffee.utils.Nodes.BlockNode;
+import roboticoffee.utils.Nodes.BooleanNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
 import roboticoffee.utils.Nodes.FunctionNode;
@@ -18,19 +19,21 @@ import roboticoffee.utils.Nodes.NumberNode;
 import roboticoffee.utils.Nodes.PostfixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.PrefixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.ProgramNode;
+import roboticoffee.utils.Nodes.StringNode;
 import roboticoffee.utils.Nodes.TurnStatementNode;
 import roboticoffee.utils.Nodes.WhileStatementNode;
 
 public class Parser {
     private List<Token> tokens;
     private int position;
+    private int line = 0;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
     public ProgramNode parse() {
-        ProgramNode programNode = new ProgramNode();
+        ProgramNode programNode = new ProgramNode(0);
         while (!isAtEnd()) {
             programNode.addStatement(parseStatement());
         }
@@ -70,16 +73,16 @@ public class Parser {
             BinaryExpressionNode binaryExpressionNode = (BinaryExpressionNode) expression;
             if (binaryExpressionNode.getOperator().equals("=")) {
 
-                return new AssignmentNode(((IdentifierNode) binaryExpressionNode.getLeft()).getIdentifier(), "=", binaryExpressionNode.getRight());
+                return new AssignmentNode(((IdentifierNode) binaryExpressionNode.getLeft()).getIdentifier(), "=", binaryExpressionNode.getRight(),line);
             }
         }
-        return new ExpressionStatementNode(expression);
+        return new ExpressionStatementNode(expression, line);
     }
     private Node parseFunction() {
         consume(TokenType.KEYWORD, "function");
         Token functionName = consume(TokenType.IDENTIFIER, null);
         consume(TokenType.SEMICOLON, ";");
-        return new FunctionNode(functionName.getValue());
+        return new FunctionNode(functionName.getValue(), line);
     }
 
     private Node parseWhileStatement() {
@@ -88,7 +91,7 @@ public class Parser {
         Node condition = parseCondition();
         consume(TokenType.CLOSE_PAREN, ")");
         Node body = parseBlock();
-        return new WhileStatementNode(condition, body);
+        return new WhileStatementNode(condition, body, line);
     }
 
     private Node parseForStatement() {
@@ -106,7 +109,7 @@ public class Parser {
 
         Node body = parseBlock();
 
-        return new ForStatementNode(initialization, condition, increment, body);
+        return new ForStatementNode(initialization, condition, increment, body, line);
     }
 
     private Node parseIfStatement() {
@@ -115,7 +118,7 @@ public class Parser {
         Node condition = parseCondition();
         consume(TokenType.CLOSE_PAREN, ")");
         Node body = parseBlock();
-        return new IfStatementNode(condition, body);
+        return new IfStatementNode(condition, body, line);
     }
 
     private Node parseMoveStatement() {
@@ -124,7 +127,7 @@ public class Parser {
         Node expression = parseExpression();
         consume(TokenType.CLOSE_PAREN, ")");
         consume(TokenType.SEMICOLON, ";");
-        return new MoveStatementNode(expression);
+        return new MoveStatementNode(expression, line);
     }
 
     private Node parseTurnStatement() {
@@ -133,7 +136,7 @@ public class Parser {
         String direction = parseDirection();
         consume(TokenType.CLOSE_PAREN, ")");
         consume(TokenType.SEMICOLON, ";");
-        return new TurnStatementNode(direction);
+        return new TurnStatementNode(direction, line);
     }
 
 
@@ -144,19 +147,16 @@ public class Parser {
     private Node parseExpressionWithPrecedence(int minPrecedence) {
         Token current = peek();
 
-        // Prefix operátorok kezelése
         if (isOperator(current) && (current.getValue().equals("++") || current.getValue().equals("--"))) {
             Token operator = advance();
 
-            // Ellenőrizzük, hogy az operandus egy változó (IDENTIFIER)
             Token operandToken = peek();
             if (operandToken.getType() != TokenType.IDENTIFIER) {
                 throw new IllegalArgumentException("Expected a variable name after " + operator.getValue() + ", but found: " + operandToken.getValue());
             }
 
-            // Létrehozzuk az IdentifierNode-t a változó nevével
-            IdentifierNode operand = new IdentifierNode(advance().getValue());
-            return new PrefixIncrementDecrementNode(operator.getValue(), operand.getIdentifier());
+            IdentifierNode operand = new IdentifierNode(advance().getValue(), line);
+            return new PrefixIncrementDecrementNode(operator.getValue(), operand.getIdentifier(), line);
         }
 
         Node left = parsePrimary();
@@ -168,7 +168,7 @@ public class Parser {
             int nextMinPrecedence = isRightAssociative(operator) ? precedence : precedence + 1;
 
             Node right = parseExpressionWithPrecedence(nextMinPrecedence);
-            left = new BinaryExpressionNode(left, operator.getValue(), right);
+            left = new BinaryExpressionNode(left, operator.getValue(), right, line);
         }
 
         return left;
@@ -177,10 +177,14 @@ public class Parser {
     private Node parsePrimary() {
         Token current = advance();
         if (current.getType() == TokenType.NUMBER) {
-            return new NumberNode(current.getValue());
-        } else if (current.getType() == TokenType.IDENTIFIER) {
-            IdentifierNode identifier = new IdentifierNode(current.getValue());
-            // Ellenőrizzük, hogy van-e postfix operátor
+            return new NumberNode(current.getValue(), line);
+        } else if (current.getType() == TokenType.STRING) {
+            return new StringNode(current.getValue(), line);
+        } else if (current.getType() == TokenType.BOOLEAN) {
+            return new BooleanNode(current.getValue().equals("true"), line);
+        }
+        else if (current.getType() == TokenType.IDENTIFIER) {
+            IdentifierNode identifier = new IdentifierNode(current.getValue(), line);
             if (!isAtEnd() && peek().getType() == TokenType.OPERATOR && (peek().getValue().equals("++") || peek().getValue().equals("--"))) {
                 return parsePostfixIncrementOrDecrement(identifier);
             }
@@ -224,9 +228,9 @@ public class Parser {
     }
 
     private Node parsePostfixIncrementOrDecrement(IdentifierNode identifier) {
-        Token operator = advance(); // ++ vagy --
+        Token operator = advance();
         if (operator.getValue().equals("++") || operator.getValue().equals("--")) {
-            return new PostfixIncrementDecrementNode(identifier.getIdentifier(), operator.getValue());
+            return new PostfixIncrementDecrementNode(identifier.getIdentifier(), operator.getValue(), line);
         }
         throw new IllegalArgumentException("Expected '++' or '--', but found: " + operator.getValue());
     }
@@ -241,14 +245,14 @@ public class Parser {
         if (operator.getValue().equals("=")) {
             Node value = parseExpression();
             consume(TokenType.SEMICOLON, ";");
-            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value);
+            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value, line);
         } else if (operator.getValue().equals("+=") || operator.getValue().equals("-=") || operator.getValue().equals("*=") || operator.getValue().equals("/=")) {
             if (typeToken.getValue() != "int") {
                 throw new IllegalArgumentException("Type " + typeToken.getValue() + " is not allowed for " + operator.getValue());
             }
             Node value = parseExpression();
             consume(TokenType.SEMICOLON, ";");
-            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value);
+            return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value, line);
 
         }
         throw new IllegalArgumentException("Expected assignment operator, but found: " + operator.getValue());
@@ -256,7 +260,7 @@ public class Parser {
 
     private Node parseBlock() {
         consume(TokenType.OPEN_BRACE, "{");
-        BlockNode blockNode = new BlockNode();
+        BlockNode blockNode = new BlockNode(line);
         while (!isAtEnd() && !check(TokenType.CLOSE_BRACE)) {
             blockNode.addStatement(parseStatement());
         }
@@ -275,6 +279,11 @@ public class Parser {
                 throw new IllegalArgumentException("Expected a boolean expression, but found: " + binaryExpressionNode.getOperator());
             }
 
+        } else if (cond instanceof IdentifierNode) {
+            return cond;
+        } else if (cond instanceof BooleanNode) {
+            return cond;
+            
         }
         throw new IllegalArgumentException("Expected a boolean expression, but found: " + peek());
     }
@@ -328,6 +337,7 @@ public class Parser {
 
     private Token consume(TokenType type, String value) {
         if (check(type) && (value == null || peek().getValue().equals(value))) {
+            line = peek().getLineNumber();
             return advance();
         } else {
             throw new IllegalArgumentException("Expected " + value + " but found " + peek());

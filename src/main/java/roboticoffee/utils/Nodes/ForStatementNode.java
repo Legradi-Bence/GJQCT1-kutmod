@@ -6,7 +6,8 @@ public class ForStatementNode extends Node {
     private Node iterator;
     private Node body;
 
-    public ForStatementNode(Node initializer, Node condition, Node iterator, Node body) {
+    public ForStatementNode(Node initializer, Node condition, Node iterator, Node body, int lineNumber) {
+        super(lineNumber);
         this.initializer = initializer;
         this.condition = condition;
         this.iterator = iterator;

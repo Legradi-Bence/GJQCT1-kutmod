@@ -5,7 +5,8 @@ public class AssignmentNode extends Node{
     private String operator;
     private Node value;
 
-    public AssignmentNode( String identifier, String operator, Node value) {
+    public AssignmentNode(String identifier, String operator, Node value, int lineNumber) {
+        super(lineNumber);
         this.identifier = identifier;
         this.operator = operator;
         this.value = value;
