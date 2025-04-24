@@ -67,8 +67,8 @@ public class Parser {
                     return parseFunction();
                 case "takeOrder":
                     return parseTakeOrder();
-                case "placeOrder":
-                    return parsePlaceOrder();
+                case "placeCoffee":
+                    return parsePlaceCoffee();
                 case "takeCoffee":
                     return parseTakeCoffee();
                 case "print":
@@ -119,8 +119,8 @@ public class Parser {
         return new TakeCoffeeNode(line);
     }
 
-    private Node parsePlaceOrder() {
-        consume(TokenType.KEYWORD, "placeOrder");
+    private Node parsePlaceCoffee() {
+        consume(TokenType.KEYWORD, "placeCoffee");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         consume(TokenType.SEMICOLON, ";");

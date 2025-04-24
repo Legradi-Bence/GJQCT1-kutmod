@@ -217,6 +217,12 @@ public class RobotState extends AbstractAppState {
             return -1;
         }
     }
+    public CoffeeType getInHand() {
+        return inHand;
+    }
+    public void setInHand(CoffeeType inHand) {
+        this.inHand = inHand;
+    }
     public int getRobotPosX() {
         return robotPosX;
     }
@@ -235,8 +241,26 @@ public class RobotState extends AbstractAppState {
         }
         return true;
     }
+
     public void addOrder(Order order) {
         orders.add(order);
+    }
+    public Order getOrderByTable(Table table) {
+        for (Order order : orders) {
+            if (order.getTable().equals(table)) {
+                return order;
+            }
+        }
+        return null;
+    }
+
+    public void removeOrder(Order order) {
+        if (orders.remove(order)) {
+            System.out.println("Order removed: " + order);
+        } else {
+            System.out.println("Order not found: " + order);
+            
+        }
     }
 
 }

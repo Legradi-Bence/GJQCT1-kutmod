@@ -164,7 +164,22 @@ public class Interpreter {
     }
 
     private void execute(PlaceCoffeeNode placeOrderNode) {
-        // TODO
+        if (!peopleState.isAtTable(robotState.getHeadPosition())) {
+            return;
+        }
+        Table table = peopleState.getTableByCoords(robotState.getHeadPosition());
+        Order order = robotState.getOrderByTable(table);
+        if (order == null) {
+            return; 
+        } else if (order.getOrderedCoffee() == robotState.getInHand()) {
+            robotState.setInHand(null);
+            robotState.removeOrder(order);
+            peopleState.leave(table);
+            System.out.println("Order placed: " + order.getOrderedCoffee() + " for table: " + order.getTable().getName());//
+            System.out.println("Nice");
+        } else {
+            System.out.println("Wrong coffee type! Want: " + order.getOrderedCoffee() + ", but got: " + robotState.getInHand());//
+        }
     }
 
     private void execute(PrintNode printNode) {
@@ -173,7 +188,7 @@ public class Interpreter {
 
     private void execute(TakeCoffeeNode takeCoffeeNode) {
         int coffeeNumber = robotState.getCoffeeNumber();
-        
+        System.out.println("In hand: " + robotState.getInHand());
     }
 
     private void execute(TakeOrderNode takeOrderNode) {

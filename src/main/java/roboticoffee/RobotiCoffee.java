@@ -51,14 +51,16 @@ public class RobotiCoffee extends SimpleApplication {
         stateManager.attach(new CreateSceeneState(this));
         rootNode = getRootNode();
         rootNode.attachChild(localRootNode);
-        peopleState.addTable("Table_A_1", 10, 1);
-        peopleState.addTable("Table_A_2", 10, 3);
-        peopleState.addTable("Table_A_3", 10, 5);
-        peopleState.addTable("Table_A_4", 10, 7);
-        peopleState.addTable("Table_B_1", 12, 1);
-        peopleState.addTable("Table_B_2", 12, 3);
-        peopleState.addTable("Table_B_3", 12, 5);
-        peopleState.addTable("Table_B_4", 12, 7);
+        peopleState.addTable("Table_A_1", 9, 1);
+        peopleState.addTable("Table_A_2", 9, 3);
+        peopleState.addTable("Table_A_3", 9, 5);
+        peopleState.addTable("Table_A_4", 9, 7);
+        peopleState.addTable("Table_A_5", 9, 9);
+        peopleState.addTable("Table_B_1", 13, 1);
+        peopleState.addTable("Table_B_2", 13, 3);
+        peopleState.addTable("Table_B_3", 13, 5);
+        peopleState.addTable("Table_B_4", 13, 7);
+        peopleState.addTable("Table_B_5", 13, 9);
     }
 
     @Override

@@ -12,7 +12,7 @@ public class Lexer {
     private int line = 1;
     private int inlinePosition = 0;
     private static final Set<String> KEYWORDS = Set.of("if", "else", "while", "for", "return", "int", "string", "boolean", "move", "turn", "true", "false", "north", "south", "east",
-            "west", "left","right", "back", "function","takeOrder","placeOrder","takeCoffee","arePeopleWaiting","print","getRobotPosX","getRobotPosZ");
+            "west", "left","right", "back", "function","takeOrder","placeCoffee","takeCoffee","arePeopleWaiting","print","getRobotPosX","getRobotPosZ");
     private static final Set<String> OPERATORS = Set.of("+", "-", "*", "/", "%", "=", "==", "!=", "++","--", "+=", "-=", "*=", "/=", "&&", "||", "!", "<", ">", "<=", ">=");
 
     public Lexer(String input) {

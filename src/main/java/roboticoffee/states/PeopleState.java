@@ -59,9 +59,9 @@ public class PeopleState extends AbstractAppState {
         Random rnd = new Random();
         int randomIndex = rnd.nextInt(2);
         if (randomIndex == 0) {
-            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Ferfiallo.glb"), name, x, z);
+            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Ferfiallo.glb"), simpleApp.getAssetManager().loadModel("Models/Ferfiulo.glb"), name, x, z);
         } else {
-            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Noallo.glb"), name, x, z);
+            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Noallo.glb"), simpleApp.getAssetManager().loadModel("Models/Noulo.glb"),name, x, z);
         }
         person.setTable(table);
         people.add(person);
@@ -104,6 +104,16 @@ public class PeopleState extends AbstractAppState {
         return tables;
     }
 
+    public Table getTableByCoords(Vector3f position) {
+        for (Table table : tables) {
+            if (table.getPosition().equals(position)) {
+                return table;
+            }
+        }
+        return null;
+        
+    }
+
     public void addTable(String name, int x, int z) {
 
         Table table = new Table(localRootNode, simpleApp.getAssetManager().loadModel("Models/Szekesasztal.glb"), name, x, z);
@@ -139,6 +149,28 @@ public class PeopleState extends AbstractAppState {
         queue.remove(person);
         return person;
     }
+
+    public boolean isAtTable(Vector3f position) {
+        for (Table table : tables) {
+            if (table.getPosition().equals(position)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void leave(Table table) {
+        for (Person person : people) {
+            if (person.getTable() == table) {
+                person.setLeaving(true);
+                table.setOccupied(false);
+                people.remove(person);
+                queue.remove(person);
+                break;
+            }
+        }
+    }
+
 
 
     
