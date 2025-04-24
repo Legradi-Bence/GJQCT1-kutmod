@@ -5,9 +5,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
-import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
-import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
@@ -15,7 +13,6 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
-import jme3tools.optimize.GeometryBatchFactory;
 
 /**
  *
@@ -74,23 +71,6 @@ public class CreateSceeneState extends AbstractAppState {
         shopModel.setLocalTranslation(0, 0, 0);
         shop.attachChild(shopModel);
         return shop;
-    }
-    private Node createTiles() {
-        Node tiles = new Node("Tiles");
-        Material mat = assetManager.loadMaterial("Materials/BaseMaterial.j3m");
-
-        for (int j = 0; j < 20; j++) {
-            for (int i = 0; i < 20; i++) {
-                Spatial tile = assetManager.loadModel("Models/Tile.glb");
-                tile.setLocalScale(0.5f, 0.5f, 0.5f);
-                tile.setMaterial(mat);
-                tile.setLocalTranslation(i, -0.1f, j);
-                tiles.attachChild(tile);
-            }
-        }
-
-        GeometryBatchFactory.optimize(tiles, true);
-        return tiles;
     }
 
 }

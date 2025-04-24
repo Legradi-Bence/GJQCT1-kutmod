@@ -5,7 +5,9 @@
 package roboticoffee.states;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
@@ -14,11 +16,16 @@ import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
+import roboticoffee.RobotiCoffee;
+import roboticoffee.utils.CoffeeType;
 import roboticoffee.utils.Direction;
+import roboticoffee.utils.Order;
 import roboticoffee.utils.Rectangle;
+import roboticoffee.utils.Table;
 
 /**
  *
@@ -32,10 +39,13 @@ public class RobotState extends AbstractAppState {
     private final Node localRootNode = new Node("BaseRobotNode");
     private Spatial robotNode = new Node("RobotNode");
     private final AssetManager assetManager;
-    private Integer robotPosX = 0;
-    private Integer robotPosZ = 0;
-    private Direction robotDirection = Direction.NORTH;
+    private Integer robotPosX = 5;
+    private Integer robotPosZ = 3;
+    private Direction robotDirection = Direction.SOUTH;
     private final List<Rectangle> validAreas = new ArrayList<>();
+    private final List<Rectangle> obstacles = new ArrayList<>();
+    private CoffeeType inHand = null;
+    private final Queue<Order> orders = new LinkedList<>();
 
     public RobotState(SimpleApplication app) {
         simpleApp = app;
@@ -53,8 +63,9 @@ public class RobotState extends AbstractAppState {
         simpleApp.enqueue(() -> {
             rootNode.attachChild(localRootNode);
             robotNode = assetManager.loadModel("Models/Robot.glb");
+            robotNode.setLocalRotation(new Quaternion().fromAngleAxis(-FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0)));
+            robotNode.setLocalTranslation(5, 0, 3);
             localRootNode.attachChild(robotNode);
-            turn("north");
             return null;
         });
 
@@ -134,8 +145,7 @@ public class RobotState extends AbstractAppState {
             if (!isPositionValid(newX, newZ)) {
                 System.out.println("Cannot move to position: (" + newX + ", " + newZ + "). Obstacle detected!");
                 break;
-            }
-            else {
+            } else {
                 robotPosX = newX;
                 robotPosZ = newZ;
             }
@@ -146,19 +156,87 @@ public class RobotState extends AbstractAppState {
         });
 
     }
-    
+
     private boolean isPositionValid(int x, int z) {
         for (Rectangle area : validAreas) {
             if (area.contains(x, z)) {
+                for (Rectangle obstacle : obstacles) {
+                    if (obstacle.contains(x, z)) {
+                        return false;
+                    }
+                }
+                for (Table table : ((RobotiCoffee) simpleApp).getPeopleState().getTables()) {
+                    if (table.getRectangle().contains(x, z)) {
+                        return false;
+                    }
+                }
                 return true;
             }
         }
         return false;
     }
 
+    public Vector3f getHeadPosition() {
+        switch (robotDirection) {
+            case NORTH:
+                return new Vector3f(robotPosX, 0, robotPosZ + 1);
+            case SOUTH:
+                return new Vector3f(robotPosX, 0, robotPosZ - 1);
+            case EAST:
+                return new Vector3f(robotPosX - 1, 0, robotPosZ);
+            case WEST:
+                return new Vector3f(robotPosX + 1, 0, robotPosZ);
+            default:
+                throw new IllegalArgumentException("Invalid direction: " + robotDirection);
+        }
+    }
+
+    public boolean isAtCounter() {
+        return getHeadPosition().equals(new Vector3f(5, 0, 2)) && robotPosX == 5 && robotPosZ == 3;
+    }
+
+    public int getCoffeeNumber() {
+        if (robotDirection != Direction.NORTH) {
+            return -1;
+        } else if (getHeadPosition().equals(new Vector3f(5, 0, 5))) {
+            inHand = CoffeeType.LATTE;
+            return 1;
+        } else if (getHeadPosition().equals(new Vector3f(4, 0, 5))) {
+            inHand = CoffeeType.CAPPUCCINO;
+            return 2;
+        } else if (getHeadPosition().equals(new Vector3f(3, 0, 5))) {
+            inHand = CoffeeType.MELANGE;
+            return 3;
+        } else if (getHeadPosition().equals(new Vector3f(2, 0, 5))) {
+            inHand = CoffeeType.PRESSO;
+            return 4;
+        } else if (getHeadPosition().equals(new Vector3f(1, 0, 5))) {
+            inHand = CoffeeType.FRAPPE;
+            return 5;
+        } else {
+            return -1;
+        }
+    }
+    public int getRobotPosX() {
+        return robotPosX;
+    }
+    public int getRobotPosZ() {
+        return robotPosZ;
+    }
+
     @Override
     public void cleanup() {
         rootNode.detachChild(localRootNode);
+    }
+
+    public boolean arePeopleWaiting() {
+        if (((RobotiCoffee) simpleApp).getPeopleState().isEmptyQueue()) {
+            return false;
+        }
+        return true;
+    }
+    public void addOrder(Order order) {
+        orders.add(order);
     }
 
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import roboticoffee.utils.Nodes.DeclarationNode;
+import roboticoffee.utils.Nodes.ArePeopleWaitingNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
 import roboticoffee.utils.Nodes.BlockNode;
@@ -11,15 +12,21 @@ import roboticoffee.utils.Nodes.BooleanNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
 import roboticoffee.utils.Nodes.FunctionNode;
+import roboticoffee.utils.Nodes.GetRobotPosXNode;
+import roboticoffee.utils.Nodes.GetRobotPosZNode;
 import roboticoffee.utils.Nodes.IdentifierNode;
 import roboticoffee.utils.Nodes.IfStatementNode;
 import roboticoffee.utils.Nodes.MoveStatementNode;
 import roboticoffee.utils.Nodes.Node;
 import roboticoffee.utils.Nodes.NumberNode;
+import roboticoffee.utils.Nodes.PlaceCoffeeNode;
 import roboticoffee.utils.Nodes.PostfixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.PrefixIncrementDecrementNode;
+import roboticoffee.utils.Nodes.PrintNode;
 import roboticoffee.utils.Nodes.ProgramNode;
 import roboticoffee.utils.Nodes.StringNode;
+import roboticoffee.utils.Nodes.TakeCoffeeNode;
+import roboticoffee.utils.Nodes.TakeOrderNode;
 import roboticoffee.utils.Nodes.TurnStatementNode;
 import roboticoffee.utils.Nodes.WhileStatementNode;
 
@@ -58,12 +65,74 @@ public class Parser {
                     return parseTurnStatement();
                 case "function":
                     return parseFunction();
+                case "takeOrder":
+                    return parseTakeOrder();
+                case "placeOrder":
+                    return parsePlaceOrder();
+                case "takeCoffee":
+                    return parseTakeCoffee();
+                case "print":
+                    return parsePrint();
                 default:
                     throw new IllegalArgumentException("Unexpected keyword: " + current.getValue());
             }
         } else {
             return parseExpressionStatement();
         }
+    }
+
+    private Node parseGetRobotPosZ() {
+        consume(TokenType.KEYWORD, "getRobotPosZ");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        return new GetRobotPosZNode(line);
+    }
+
+    private Node parseGetRobotPosX() {
+        consume(TokenType.KEYWORD, "getRobotPosX");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        return new GetRobotPosXNode(line);
+    }
+
+    private Node parsePrint() {
+        consume(TokenType.KEYWORD, "print");
+        consume(TokenType.OPEN_PAREN, "(");
+        Node expression = parseExpression();
+        consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
+        return new PrintNode(expression, line);
+    }
+
+    private Node parseArePeopleWaiting() {
+        consume(TokenType.KEYWORD, "arePeopleWaiting");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        return new ArePeopleWaitingNode(line);
+    }
+
+    private Node parseTakeCoffee() {
+        consume(TokenType.KEYWORD, "takeCoffee");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
+        return new TakeCoffeeNode(line);
+    }
+
+    private Node parsePlaceOrder() {
+        consume(TokenType.KEYWORD, "placeOrder");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
+        return new PlaceCoffeeNode(line);
+    }
+
+    private Node parseTakeOrder() {
+        consume(TokenType.KEYWORD, "takeOrder");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        consume(TokenType.SEMICOLON, ";");
+        return new TakeOrderNode(line);
     }
 
     private Node parseExpressionStatement() {
@@ -73,11 +142,12 @@ public class Parser {
             BinaryExpressionNode binaryExpressionNode = (BinaryExpressionNode) expression;
             if (binaryExpressionNode.getOperator().equals("=")) {
 
-                return new AssignmentNode(((IdentifierNode) binaryExpressionNode.getLeft()).getIdentifier(), "=", binaryExpressionNode.getRight(),line);
+                return new AssignmentNode(((IdentifierNode) binaryExpressionNode.getLeft()).getIdentifier(), "=", binaryExpressionNode.getRight(), line);
             }
         }
         return new ExpressionStatementNode(expression, line);
     }
+
     private Node parseFunction() {
         consume(TokenType.KEYWORD, "function");
         Token functionName = consume(TokenType.IDENTIFIER, null);
@@ -139,8 +209,16 @@ public class Parser {
         return new TurnStatementNode(direction, line);
     }
 
-
     private Node parseExpression() {
+
+        switch (peek().getValue()) {
+            case "arePeopleWaiting":
+                return parseArePeopleWaiting();
+            case "getRobotPosX":
+                return parseGetRobotPosX();
+            case "getRobotPosZ":
+                return parseGetRobotPosZ();
+        }
         return parseExpressionWithPrecedence(0);
     }
 
@@ -182,8 +260,7 @@ public class Parser {
             return new StringNode(current.getValue(), line);
         } else if (current.getType() == TokenType.BOOLEAN) {
             return new BooleanNode(current.getValue().equals("true"), line);
-        }
-        else if (current.getType() == TokenType.IDENTIFIER) {
+        } else if (current.getType() == TokenType.IDENTIFIER) {
             IdentifierNode identifier = new IdentifierNode(current.getValue(), line);
             if (!isAtEnd() && peek().getType() == TokenType.OPERATOR && (peek().getValue().equals("++") || peek().getValue().equals("--"))) {
                 return parsePostfixIncrementOrDecrement(identifier);
@@ -204,15 +281,15 @@ public class Parser {
 
     private int getPrecedence(Token token) {
         int precedence = switch (token.getValue()) {
-            case "++", "--" -> 1;
-            case "!" -> 2;
-            case "*", "/", "%" -> 3;
-            case "+", "-" -> 4;
+            case "++", "--" -> 9;
+            case "!" -> 8;
+            case "*", "/", "%" -> 7;
+            case "+", "-" -> 6;
             case "<", ">", "<=", ">=" -> 5;
-            case "==", "!=" -> 6;
-            case "&&" -> 7;
-            case "||" -> 8;
-            case "=", "+=", "-=", "*=", "/=" -> 9;
+            case "==", "!=" -> 4;
+            case "&&" -> 3;
+            case "||" -> 2;
+            case "=", "+=", "-=", "*=", "/=" -> 1;
             default -> -1;
         };
 
@@ -283,7 +360,7 @@ public class Parser {
             return cond;
         } else if (cond instanceof BooleanNode) {
             return cond;
-            
+
         }
         throw new IllegalArgumentException("Expected a boolean expression, but found: " + peek());
     }

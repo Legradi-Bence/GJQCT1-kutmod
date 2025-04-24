@@ -20,14 +20,12 @@ public class UIState extends AbstractAppState {
     private final Node guiNode;
 
     private final static List<String> codeWindowNames = new ArrayList<>();
-    private RobotState robotState;
 
-    public UIState(SimpleApplication app, RobotState robotState) {
+    public UIState(SimpleApplication app, RobotState robotState, PeopleState peopleState) {
 
         rootNode = app.getRootNode();
         guiNode = app.getGuiNode();
-        this.robotState = robotState;
-        CodeWindowConrolGenerator generator = new CodeWindowConrolGenerator(app, robotState);
+        CodeWindowConrolGenerator generator = new CodeWindowConrolGenerator(app, robotState, peopleState);
         JavaFxUI.initialize(app);
 
         Button button = new Button("New Code Window");

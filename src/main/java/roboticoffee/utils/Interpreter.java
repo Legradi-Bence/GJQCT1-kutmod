@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.Stack;
 
 import javafx.application.Platform;
+import roboticoffee.states.PeopleState;
 import roboticoffee.states.RobotState;
+import roboticoffee.utils.Nodes.ArePeopleWaitingNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
 import roboticoffee.utils.Nodes.BlockNode;
@@ -15,20 +17,27 @@ import roboticoffee.utils.Nodes.DeclarationNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
 import roboticoffee.utils.Nodes.FunctionNode;
+import roboticoffee.utils.Nodes.GetRobotPosXNode;
+import roboticoffee.utils.Nodes.GetRobotPosZNode;
 import roboticoffee.utils.Nodes.IdentifierNode;
 import roboticoffee.utils.Nodes.IfStatementNode;
 import roboticoffee.utils.Nodes.MoveStatementNode;
 import roboticoffee.utils.Nodes.Node;
 import roboticoffee.utils.Nodes.NumberNode;
+import roboticoffee.utils.Nodes.PlaceCoffeeNode;
 import roboticoffee.utils.Nodes.PostfixIncrementDecrementNode;
 import roboticoffee.utils.Nodes.PrefixIncrementDecrementNode;
+import roboticoffee.utils.Nodes.PrintNode;
 import roboticoffee.utils.Nodes.ProgramNode;
 import roboticoffee.utils.Nodes.StringNode;
+import roboticoffee.utils.Nodes.TakeCoffeeNode;
+import roboticoffee.utils.Nodes.TakeOrderNode;
 import roboticoffee.utils.Nodes.TurnStatementNode;
 import roboticoffee.utils.Nodes.WhileStatementNode;
 
 public class Interpreter {
     private RobotState robotState;
+    private PeopleState peopleState;
     private CodeWindowControl codeWindowControl;
     private Stack<HashMap<String, Object>> scopeStack = new Stack<>();
     private final Map<String, Node> functionCache = new HashMap<>();
@@ -36,11 +45,13 @@ public class Interpreter {
     private ProgramStatus programState = ProgramStatus.STOPPED;
     private long delay = 500;
 
-    public Interpreter(String functionName, RobotState robotState, CodeWindowControl codeWindowControl) {
+    public Interpreter(String functionName, RobotState robotState, PeopleState peopleState, CodeWindowControl codeWindowControl) {
         this.codeWindowControl = codeWindowControl;
         this.functionName = functionName;
         this.robotState = robotState;
+        this.peopleState = peopleState;
     }
+
     public void setDelay(long delay) {
         this.delay = delay;
     }
@@ -117,7 +128,6 @@ public class Interpreter {
             }
         }
 
-
         if (node instanceof ProgramNode) {
             execute((ProgramNode) node);
         } else if (node instanceof BlockNode) {
@@ -140,8 +150,40 @@ public class Interpreter {
             execute((AssignmentNode) node);
         } else if (node instanceof FunctionNode) {
             execute((FunctionNode) node);
+        } else if (node instanceof PlaceCoffeeNode) {
+            execute((PlaceCoffeeNode) node);
+        } else if (node instanceof PrintNode) {
+            execute((PrintNode) node);
+        } else if (node instanceof TakeCoffeeNode) {
+            execute((TakeCoffeeNode) node);
+        } else if (node instanceof TakeOrderNode) {
+            execute((TakeOrderNode) node);
         } else {
             evaluate(node);
+        }
+    }
+
+    private void execute(PlaceCoffeeNode placeOrderNode) {
+        // TODO
+    }
+
+    private void execute(PrintNode printNode) {
+        System.out.println(evaluate(printNode.getExpression()));
+    }
+
+    private void execute(TakeCoffeeNode takeCoffeeNode) {
+        int coffeeNumber = robotState.getCoffeeNumber();
+        
+    }
+
+    private void execute(TakeOrderNode takeOrderNode) {
+        if (!robotState.isAtCounter()) {
+            return;
+        }
+        Person person;
+        if ((person = peopleState.getFirstPerson()) != null) {
+            robotState.addOrder(person.order());
+            person.setTableDestiantion();
         }
     }
 
@@ -260,8 +302,7 @@ public class Interpreter {
         }
         if (evaluate(moveStatementNode.getDistance()) instanceof Number) {
             robotState.move(((Number) evaluate(moveStatementNode.getDistance())).intValue());
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Distance must be a number: " + moveStatementNode.getDistance());
         }
     }
@@ -518,11 +559,28 @@ public class Interpreter {
     private Object evaluate(NumberNode numberNode) {
         return numberNode.getValue();
     }
+
     private Object evaluate(BooleanNode booleanNode) {
         return booleanNode.getValue();
     }
+
     private Object evaluate(StringNode stringNode) {
         return stringNode.getValue();
+    }
+
+    private Object evaluate(ArePeopleWaitingNode arePeopleWaitingNode) {
+        return robotState.arePeopleWaiting();
+
+    }
+
+    private Object evaluate(GetRobotPosXNode getRobotPosXNode) {
+        return robotState.getRobotPosX();
+
+    }
+
+    private Object evaluate(GetRobotPosZNode getRobotPosZNode) {
+        return robotState.getRobotPosZ();
+
     }
 
     private Object evaluate(Node node) {
@@ -544,8 +602,13 @@ public class Interpreter {
             return evaluate((BooleanNode) node);
         } else if (node instanceof StringNode) {
             return evaluate((StringNode) node);
-        }
-        else {
+        } else if (node instanceof ArePeopleWaitingNode) {
+            return evaluate((ArePeopleWaitingNode) node);
+        } else if (node instanceof GetRobotPosXNode) {
+            return evaluate((GetRobotPosXNode) node);
+        } else if (node instanceof GetRobotPosZNode) {
+            return evaluate((GetRobotPosZNode) node);
+        } else {
             throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
         }
     }

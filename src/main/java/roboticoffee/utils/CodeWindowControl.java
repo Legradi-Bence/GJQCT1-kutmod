@@ -11,6 +11,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import roboticoffee.states.PeopleState;
 import roboticoffee.states.RobotState;
 import roboticoffee.utils.Nodes.ProgramNode;
 
@@ -26,10 +27,10 @@ public class CodeWindowControl extends StackPane {
     private Button stopButton;
     private Task<Void> currentTask;
 
-    public CodeWindowControl(String name, RobotState robotState) {
+    public CodeWindowControl(String name, RobotState robotState, PeopleState peopleState) {
         this.robotState = robotState;
         this.name = name;
-        interpreter = new Interpreter(name, robotState, this);
+        interpreter = new Interpreter(name, robotState, peopleState, this);
         Label label = new Label(name);
         runButton = new Button("R");
         runButton.setOnAction(event -> {
