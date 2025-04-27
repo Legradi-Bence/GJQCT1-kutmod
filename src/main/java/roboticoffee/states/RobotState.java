@@ -38,6 +38,8 @@ public class RobotState extends AbstractAppState {
     private final Node rootNode;
     private final Node localRootNode = new Node("BaseRobotNode");
     private Spatial robotNode = new Node("RobotNode");
+    private Spatial robotWithCoffeeNode = new Node("RobotWithCoffeeNode");
+    private Spatial robotNoCoffeeNode = new Node("RobotNoCoffeeNode");
     private final AssetManager assetManager;
     private Integer robotPosX = 5;
     private Integer robotPosZ = 3;
@@ -46,6 +48,10 @@ public class RobotState extends AbstractAppState {
     private final List<Rectangle> obstacles = new ArrayList<>();
     private CoffeeType inHand = null;
     private final Queue<Order> orders = new LinkedList<>();
+    private String printString = null;
+
+    private Runnable onPrint = null;
+    private Runnable onOrderChange = null;
 
     public RobotState(SimpleApplication app) {
         simpleApp = app;
@@ -62,7 +68,9 @@ public class RobotState extends AbstractAppState {
 
         simpleApp.enqueue(() -> {
             rootNode.attachChild(localRootNode);
-            robotNode = assetManager.loadModel("Models/Robot.glb");
+            robotWithCoffeeNode = assetManager.loadModel("Models/Robot.glb");
+            robotNoCoffeeNode = assetManager.loadModel("Models/Robotnopohar.glb");
+            robotNode = robotNoCoffeeNode;
             robotNode.setLocalRotation(new Quaternion().fromAngleAxis(-FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0)));
             robotNode.setLocalTranslation(5, 0, 3);
             localRootNode.attachChild(robotNode);
@@ -199,33 +207,56 @@ public class RobotState extends AbstractAppState {
         if (robotDirection != Direction.NORTH) {
             return -1;
         } else if (getHeadPosition().equals(new Vector3f(5, 0, 5))) {
-            inHand = CoffeeType.LATTE;
+            setInHand(CoffeeType.LATTE);
             return 1;
         } else if (getHeadPosition().equals(new Vector3f(4, 0, 5))) {
-            inHand = CoffeeType.CAPPUCCINO;
+            setInHand(CoffeeType.CAPPUCCINO);
             return 2;
         } else if (getHeadPosition().equals(new Vector3f(3, 0, 5))) {
-            inHand = CoffeeType.MELANGE;
+            setInHand(CoffeeType.MELANGE);
             return 3;
         } else if (getHeadPosition().equals(new Vector3f(2, 0, 5))) {
-            inHand = CoffeeType.PRESSO;
+            setInHand(CoffeeType.PRESSO);
             return 4;
         } else if (getHeadPosition().equals(new Vector3f(1, 0, 5))) {
-            inHand = CoffeeType.FRAPPE;
+            setInHand(CoffeeType.FRAPPE);
             return 5;
         } else {
             return -1;
         }
     }
+
     public CoffeeType getInHand() {
         return inHand;
     }
+
     public void setInHand(CoffeeType inHand) {
         this.inHand = inHand;
+
+        Vector3f currentPosition = robotNode.getLocalTranslation();
+        Quaternion currentRotation = robotNode.getLocalRotation();
+
+        simpleApp.enqueue(() -> {
+            localRootNode.detachChild(robotNode);
+
+            if (inHand != null) {
+                robotNode = robotWithCoffeeNode;
+            } else {
+                robotNode = robotNoCoffeeNode;
+            }
+
+            robotNode.setLocalTranslation(currentPosition);
+            robotNode.setLocalRotation(currentRotation);
+
+            localRootNode.attachChild(robotNode);
+            return null;
+        });
     }
+
     public int getRobotPosX() {
         return robotPosX;
     }
+
     public int getRobotPosZ() {
         return robotPosZ;
     }
@@ -244,7 +275,9 @@ public class RobotState extends AbstractAppState {
 
     public void addOrder(Order order) {
         orders.add(order);
+        OnOrderChanged();
     }
+
     public Order getOrderByTable(Table table) {
         for (Order order : orders) {
             if (order.getTable().equals(table)) {
@@ -259,8 +292,55 @@ public class RobotState extends AbstractAppState {
             System.out.println("Order removed: " + order);
         } else {
             System.out.println("Order not found: " + order);
-            
+
         }
+        OnOrderChanged();
     }
 
+    public String getOrdersString() {
+        StringBuilder orderString = new StringBuilder();
+        for (Order order : orders) {
+            orderString.append(order.getOrderedCoffee().toString().substring(0, 1) + order.getOrderedCoffee().toString().substring(1).toLowerCase()).append(" for table: ")
+                    .append(order.getTable().getName()).append("\n");
+        }
+        return orderString.toString();
+    }
+
+    private void OnOrderChanged() {
+        onOrderChange.run();
+    }
+
+    public void setOnOrderChange(Runnable onOrderChange) {
+        this.onOrderChange = onOrderChange;
+    }
+
+    public void setOnPrint(Runnable onPrint) {
+        this.onPrint = onPrint;
+    }
+
+    public String getPrintString() {
+        return printString;
+    }
+
+    public void OnPrint(String printString) {
+        if (onPrint == null) {
+            return;
+        }
+        this.printString = printString;
+        onPrint.run();
+    }
+
+    public String getFirstOrderCoffeeName() {
+        if (orders.isEmpty()) {
+            return "null";
+        }
+        return orders.peek().getOrderedCoffee().toString().substring(0, 1) + orders.peek().getOrderedCoffee().toString().substring(1).toLowerCase();
+    }
+
+    public String getFirstOrderTableName() {
+        if (orders.isEmpty()) {
+            return "null";
+        }
+        return orders.peek().getTable().getName();
+    }
 }

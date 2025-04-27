@@ -11,9 +11,10 @@ public class Lexer {
     private int position = 0;
     private int line = 1;
     private int inlinePosition = 0;
-    private static final Set<String> KEYWORDS = Set.of("if", "else", "while", "for", "return", "int", "string", "boolean", "move", "turn", "true", "false", "north", "south", "east",
-            "west", "left","right", "back", "function","takeOrder","placeCoffee","takeCoffee","arePeopleWaiting","print","getRobotPosX","getRobotPosZ");
-    private static final Set<String> OPERATORS = Set.of("+", "-", "*", "/", "%", "=", "==", "!=", "++","--", "+=", "-=", "*=", "/=", "&&", "||", "!", "<", ">", "<=", ">=");
+    private static final Set<String> KEYWORDS = Set.of("if", "else", "while", "for", "return", "int", "string", "boolean", "move", "turn", "true", "false", "north", "south",
+            "east", "west", "left", "right", "back", "function", "takeOrder", "placeCoffee", "takeCoffee", "arePeopleWaiting", "print", "getRobotPosX", "getRobotPosZ",
+            "getFirstOrderTableName", "getFirstOrderCoffeeName");
+    private static final Set<String> OPERATORS = Set.of("+", "-", "*", "/", "%", "=", "==", "!=", "++", "--", "+=", "-=", "*=", "/=", "&&", "||", "!", "<", ">", "<=", ">=");
 
     public Lexer(String input) {
         this.input = input;
@@ -63,7 +64,8 @@ public class Lexer {
                 case ')':
                     if (stack.isEmpty() || stack.pop().getType() != TokenType.OPEN_PAREN) {
                         System.out.println("Unmatched closing parenthesis at line " + line + ", position " + inlinePosition);
-                        //throw new IllegalArgumentException("Unmatched closing parenthesis at position " + position);
+                        // throw new IllegalArgumentException("Unmatched closing
+                        // parenthesis at position " + position);
                     }
                     tokens.add(new Token(TokenType.CLOSE_PAREN, ")", line));
                     break;
@@ -75,7 +77,8 @@ public class Lexer {
                 case '}':
                     if (stack.isEmpty() || stack.pop().getType() != TokenType.OPEN_BRACE) {
                         System.out.println("Unmatched closing brace at line " + line + ", position " + inlinePosition);
-                        //throw new IllegalArgumentException("Unmatched closing brace at position " + position);
+                        // throw new IllegalArgumentException("Unmatched closing
+                        // brace at position " + position);
                     }
                     tokens.add(new Token(TokenType.CLOSE_BRACE, "}", line));
                     break;
@@ -87,7 +90,8 @@ public class Lexer {
                 case ']':
                     if (stack.isEmpty() || stack.pop().getType() != TokenType.OPEN_BRACKET) {
                         System.out.println("Unmatched closing bracket at line " + line + ", position " + inlinePosition);
-                        //throw new IllegalArgumentException("Unmatched closing bracket at position " + position);
+                        // throw new IllegalArgumentException("Unmatched closing
+                        // bracket at position " + position);
                     }
                     tokens.add(new Token(TokenType.CLOSE_BRACKET, "]", line));
                     break;
@@ -101,7 +105,8 @@ public class Lexer {
         }
         if (!stack.isEmpty()) {
             System.out.println("Unmatched opening parenthesis at end of input");
-            //throw new IllegalArgumentException("Unmatched opening parenthesis at end of input");
+            // throw new IllegalArgumentException("Unmatched opening parenthesis
+            // at end of input");
         }
         return tokens;
     }

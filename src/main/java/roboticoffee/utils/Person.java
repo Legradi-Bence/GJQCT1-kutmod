@@ -2,6 +2,7 @@ package roboticoffee.utils;
 
 import java.util.Random;
 
+import com.jme3.app.SimpleApplication;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
@@ -9,11 +10,13 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
 public class Person {
+    private SimpleApplication simpleApp;
     private Node rootNode;
     private String name;
     private Vector3f destination = null;
     private Spatial personNode;
     private Spatial personSittingNode;
+    private Spatial coffee;
     private Table table;
     private float speed = 1.0f;
     private Vector3f counterPos = new Vector3f(5, 0, 1);
@@ -21,14 +24,18 @@ public class Person {
     private Random rnd = new Random();
     private boolean movingToCounter = true;
     private boolean leaving = false;
-    private float leavingTime = 2;
+    private boolean startLeaving = true;
+    private boolean left = false;
+    private float leavingTime = 100;
 
-    public Person(Node rootNode, Spatial person, Spatial personSitting, String name, int x, int z) {
+    public Person(SimpleApplication simpleApp, Node rootNode, Spatial person, Spatial personSitting, Spatial coffee, String name, int x, int z) {
+        this.simpleApp = simpleApp;
         this.rootNode = rootNode;
         this.name = name;
         this.destination = counterPos;
         personNode = person;
         personSittingNode = personSitting;
+        this.coffee = coffee;
         personNode.setName(name);
         personNode.setLocalTranslation(x, 0, z);
         personNode.setLocalRotation(new Quaternion().fromAngleAxis(FastMath.HALF_PI, new Vector3f(0, 1, 0)));
@@ -50,7 +57,7 @@ public class Person {
                     personNode.setLocalTranslation(destination);
                     destination = null;
                 }
-            } else {
+            } else if (!leaving) {
                 Vector3f direction = destination.subtract(personNode.getLocalTranslation()).normalizeLocal();
                 personNode.move(direction.mult(speed * tpf));
                 personNode.lookAt(destination, Vector3f.UNIT_Y);
@@ -72,7 +79,27 @@ public class Person {
         if (leaving) {
             leavingTime -= tpf;
             if (leavingTime <= 0) {
-                rootNode.detachChild(personSittingNode);
+                if (startLeaving) {
+                    personNode.setLocalRotation(new Quaternion().fromAngleAxis(FastMath.HALF_PI, new Vector3f(0, 1, 0)));
+                    personNode.setLocalTranslation(personSittingNode.getLocalTranslation());
+                    rootNode.detachChild(personSittingNode);
+                    rootNode.attachChild(personNode);
+                    destination = new Vector3f(8, 0, 0);
+                    startLeaving = false;
+                    removeCoffee();
+
+                }
+                if (personNode.getLocalTranslation().distance(new Vector3f(0, 0, 0)) < 0.1f) {
+                    rootNode.detachChild(personNode);
+                    left = true;
+                }
+                if (personNode.getLocalTranslation().distance(new Vector3f(8, 0, 0)) < 0.1f) {
+
+                    destination = new Vector3f(0, 0, 0);
+                }
+                Vector3f direction = destination.subtract(personNode.getLocalTranslation()).normalizeLocal();
+                personNode.move(direction.mult(speed * tpf));
+                personNode.lookAt(destination, Vector3f.UNIT_Y);
             }
 
         }
@@ -106,7 +133,6 @@ public class Person {
         int rndCoffee = rnd.nextInt(5) + 1;
         order = new Order(table, CoffeeType.getCoffeeByNumber(rndCoffee));
         movingToCounter = false;
-        System.out.println("Order: " + order.getOrderedCoffee() + " for table: " + order.getTable().getName());//
         return order;
     }
 
@@ -119,7 +145,27 @@ public class Person {
     }
 
     public void setLeaving(boolean leaving) {
+        placeCoffee();
         this.leaving = leaving;
+    }
+
+    private void placeCoffee() {
+        simpleApp.enqueue(() -> {
+            rootNode.attachChild(coffee);
+            coffee.setLocalTranslation(table.getPosition().add(0, 0, 0));
+            return null;
+        });
+    }
+
+    private void removeCoffee() {
+        simpleApp.enqueue(() -> {
+            rootNode.detachChild(coffee);
+            return null;
+        });
+    }
+
+    public boolean getLeft() {
+        return left;
     }
 
 }

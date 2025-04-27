@@ -1,5 +1,6 @@
 package roboticoffee.states;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,7 @@ import io.tlf.jme.jfx.JavaFxUI;
 import javafx.scene.control.Button;
 import roboticoffee.utils.CodeWindowConrolGenerator;
 import roboticoffee.utils.CodeWindowControl;
+import roboticoffee.utils.ConsoleControl;
 
 public class UIState extends AbstractAppState {
 
@@ -39,6 +41,18 @@ public class UIState extends AbstractAppState {
 
         });
         JavaFxUI.getInstance().attachChild(button);
+
+        ConsoleControl consoleControl = new ConsoleControl();
+
+        JavaFxUI.getInstance().attachChild(consoleControl);
+        consoleControl.setLayoutX(java.awt.Toolkit.getDefaultToolkit().getScreenSize().width * 0.8 - 400);
+        consoleControl.setLayoutY(10);
+        robotState.setOnOrderChange(() -> {
+            consoleControl.setOrders(robotState.getOrdersString());
+        });
+        robotState.setOnPrint(() -> {
+            consoleControl.appendToConsole(robotState.getPrintString());
+        });
 
     }
 

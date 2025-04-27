@@ -8,6 +8,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 
 import roboticoffee.utils.LimitedQueue;
 import roboticoffee.utils.Order;
@@ -15,7 +16,7 @@ import roboticoffee.utils.Person;
 import roboticoffee.utils.Table;
 
 public class PeopleState extends AbstractAppState {
-    
+
     private final SimpleApplication simpleApp;
     private final Node rootNode;
     private final Node localRootNode = new Node("PeopleNode");
@@ -23,6 +24,11 @@ public class PeopleState extends AbstractAppState {
     private List<Person> people = new ArrayList<>();
     private LimitedQueue<Person> queue = new LimitedQueue<>(5);
     private Vector3f counterPosition = new Vector3f(5, 0, 1);
+    private Spatial maleStandingModel;
+    private Spatial maleSittingModel;
+    private Spatial femaleStandingModel;
+    private Spatial femaleSittingModel;
+    private Spatial coffeeModel;
     private float spawnTimeInterval = 1;
     Random random = new Random();
 
@@ -30,6 +36,12 @@ public class PeopleState extends AbstractAppState {
         simpleApp = app;
         rootNode = app.getRootNode();
         rootNode.attachChild(localRootNode);
+        maleStandingModel = simpleApp.getAssetManager().loadModel("Models/Ferfiallo.glb");
+        maleSittingModel = simpleApp.getAssetManager().loadModel("Models/Ferfiulo.glb");
+        femaleStandingModel = simpleApp.getAssetManager().loadModel("Models/Noallo.glb");
+        femaleSittingModel = simpleApp.getAssetManager().loadModel("Models/Noulo.glb");
+        coffeeModel = simpleApp.getAssetManager().loadModel("Models/Poharasztalon.glb");
+
     }
 
     @Override
@@ -41,9 +53,16 @@ public class PeopleState extends AbstractAppState {
             spawnTimeInterval = 1;
         }
         updateQueuePositions();
+        List<Person> toRemove = new ArrayList<>();
         for (Person person : people) {
             person.update(tpf);
+            if (person.getLeft()) {
+                toRemove.add(person);
+                person.getTable().setOccupied(false);
+            }
         }
+        people.removeAll(toRemove);
+
     }
 
     private void spawnPerson(String name, int x, int z) {
@@ -59,15 +78,15 @@ public class PeopleState extends AbstractAppState {
         Random rnd = new Random();
         int randomIndex = rnd.nextInt(2);
         if (randomIndex == 0) {
-            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Ferfiallo.glb"), simpleApp.getAssetManager().loadModel("Models/Ferfiulo.glb"), name, x, z);
+            person = new Person(simpleApp, localRootNode, maleStandingModel.clone(), maleSittingModel.clone(), coffeeModel.clone(), name, x, z);
         } else {
-            person = new Person(localRootNode, simpleApp.getAssetManager().loadModel("Models/Noallo.glb"), simpleApp.getAssetManager().loadModel("Models/Noulo.glb"),name, x, z);
+            person = new Person(simpleApp, localRootNode, femaleStandingModel.clone(), femaleSittingModel.clone(), coffeeModel.clone(), name, x, z);
         }
         person.setTable(table);
         people.add(person);
         addToQueue(person);
     }
-    
+
     private void generatePeople() {
         if (isAllTableOccupied()) {
             return;
@@ -111,7 +130,7 @@ public class PeopleState extends AbstractAppState {
             }
         }
         return null;
-        
+
     }
 
     public void addTable(String name, int x, int z) {
@@ -163,15 +182,9 @@ public class PeopleState extends AbstractAppState {
         for (Person person : people) {
             if (person.getTable() == table) {
                 person.setLeaving(true);
-                table.setOccupied(false);
-                people.remove(person);
-                queue.remove(person);
                 break;
             }
         }
     }
 
-
-
-    
 }

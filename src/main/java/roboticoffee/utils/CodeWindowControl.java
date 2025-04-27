@@ -155,7 +155,7 @@ public class CodeWindowControl extends StackPane {
         thread.start();
 
     }
-    
+
     public void highlightLine(int lineNumber) {
         String[] lines = textArea.getText().split("\n");
         int start = 0;
@@ -175,7 +175,9 @@ public class CodeWindowControl extends StackPane {
     public String getName() {
         return name;
     }
+
     public String getCode() {
         return textArea.getText();
     }
+
 }

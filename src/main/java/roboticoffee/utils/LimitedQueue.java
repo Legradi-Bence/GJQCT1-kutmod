@@ -8,6 +8,7 @@ public class LimitedQueue<E> extends LinkedList<E> {
     public LimitedQueue(int maxSize) {
         this.maxSize = maxSize;
     }
+
     @Override
     public boolean add(E e) {
         if (size() >= maxSize) {
@@ -19,6 +20,7 @@ public class LimitedQueue<E> extends LinkedList<E> {
     public boolean isFull() {
         return size() >= maxSize;
     }
+
     public boolean isEmpty() {
         return size() == 0;
     }

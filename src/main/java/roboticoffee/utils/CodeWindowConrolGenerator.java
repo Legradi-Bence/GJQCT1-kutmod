@@ -33,9 +33,8 @@ public class CodeWindowConrolGenerator {
                     codeControl.setLayoutX(100);
                     codeControl.setLayoutY(100);
                     return codeControl;
-                }
-                else {
-                    showErrorDialog( name.get() + " is already in use!");
+                } else {
+                    showErrorDialog(name.get() + " is already in use!");
                 }
             }
         }

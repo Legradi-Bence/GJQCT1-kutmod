@@ -13,7 +13,6 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
-
 /**
  *
  * @author Bence
@@ -38,11 +37,10 @@ public class CreateSceeneState extends AbstractAppState {
         app.getCamera().setLocation(new Vector3f(12, 8, -10));
         app.getCamera().lookAt(new Vector3f(8, -2, 10), Vector3f.UNIT_Y);
         app.getCamera().setFov(50);
-        
 
         rootNode.attachChild(localRootNode);
-        Node Tiles = createShop();
-        localRootNode.attachChild(Tiles);
+        Node Shop = createShop();
+        localRootNode.attachChild(Shop);
 
         DirectionalLight sun = new DirectionalLight();
         sun.setDirection(new Vector3f(-1, -1, -1).normalizeLocal());
@@ -52,7 +50,6 @@ public class CreateSceeneState extends AbstractAppState {
         sun2.setColor(ColorRGBA.White);
         rootNode.addLight(sun);
         rootNode.addLight(sun2);
-
 
         app.getViewPort().setBackgroundColor(ColorRGBA.fromRGBA255(204, 255, 255, 255));
     }

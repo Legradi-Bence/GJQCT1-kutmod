@@ -1,6 +1,5 @@
 package roboticoffee;
 
-
 import com.jme3.app.SimpleApplication;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
@@ -51,16 +50,20 @@ public class RobotiCoffee extends SimpleApplication {
         stateManager.attach(new CreateSceeneState(this));
         rootNode = getRootNode();
         rootNode.attachChild(localRootNode);
-        peopleState.addTable("Table_A_1", 9, 1);
-        peopleState.addTable("Table_A_2", 9, 3);
-        peopleState.addTable("Table_A_3", 9, 5);
-        peopleState.addTable("Table_A_4", 9, 7);
-        peopleState.addTable("Table_A_5", 9, 9);
-        peopleState.addTable("Table_B_1", 13, 1);
-        peopleState.addTable("Table_B_2", 13, 3);
-        peopleState.addTable("Table_B_3", 13, 5);
-        peopleState.addTable("Table_B_4", 13, 7);
-        peopleState.addTable("Table_B_5", 13, 9);
+        addTables(peopleState);
+    }
+
+    private void addTables(PeopleState peopleState) {
+        peopleState.addTable("Table_9_1", 9, 1);
+        peopleState.addTable("Table_9_3", 9, 3);
+        peopleState.addTable("Table_9_5", 9, 5);
+        peopleState.addTable("Table_9_7", 9, 7);
+        peopleState.addTable("Table_9_9", 9, 9);
+        peopleState.addTable("Table_13_1", 13, 1);
+        peopleState.addTable("Table_13_3", 13, 3);
+        peopleState.addTable("Table_13_5", 13, 5);
+        peopleState.addTable("Table_13_7", 13, 7);
+        peopleState.addTable("Table_13_9", 13, 9);
     }
 
     @Override

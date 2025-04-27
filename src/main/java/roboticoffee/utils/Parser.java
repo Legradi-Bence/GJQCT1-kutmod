@@ -12,6 +12,8 @@ import roboticoffee.utils.Nodes.BooleanNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
 import roboticoffee.utils.Nodes.FunctionNode;
+import roboticoffee.utils.Nodes.GetFirstOrderCoffeeNameNode;
+import roboticoffee.utils.Nodes.GetFirstOrderTableNameNode;
 import roboticoffee.utils.Nodes.GetRobotPosXNode;
 import roboticoffee.utils.Nodes.GetRobotPosZNode;
 import roboticoffee.utils.Nodes.IdentifierNode;
@@ -73,12 +75,30 @@ public class Parser {
                     return parseTakeCoffee();
                 case "print":
                     return parsePrint();
+                case "getFirstOrderTableName":
+                    return parseGetFirstOrderTableName();
+                case "getFirstOrderCoffeeName":
+                    return parseGetFirstOrderCoffeeName();
                 default:
                     throw new IllegalArgumentException("Unexpected keyword: " + current.getValue());
             }
         } else {
             return parseExpressionStatement();
         }
+    }
+
+    private Node parseGetFirstOrderCoffeeName() {
+        consume(TokenType.KEYWORD, "getFirstOrderCoffeeName");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        return new GetFirstOrderCoffeeNameNode(line);
+    }
+
+    private Node parseGetFirstOrderTableName() {
+        consume(TokenType.KEYWORD, "getFirstOrderTableName");
+        consume(TokenType.OPEN_PAREN, "(");
+        consume(TokenType.CLOSE_PAREN, ")");
+        return new GetFirstOrderTableNameNode(line);
     }
 
     private Node parseGetRobotPosZ() {
@@ -211,14 +231,6 @@ public class Parser {
 
     private Node parseExpression() {
 
-        switch (peek().getValue()) {
-            case "arePeopleWaiting":
-                return parseArePeopleWaiting();
-            case "getRobotPosX":
-                return parseGetRobotPosX();
-            case "getRobotPosZ":
-                return parseGetRobotPosZ();
-        }
         return parseExpressionWithPrecedence(0);
     }
 
@@ -253,6 +265,18 @@ public class Parser {
     }
 
     private Node parsePrimary() {
+        switch (peek().getValue()) {
+            case "arePeopleWaiting":
+                return parseArePeopleWaiting();
+            case "getRobotPosX":
+                return parseGetRobotPosX();
+            case "getRobotPosZ":
+                return parseGetRobotPosZ();
+            case "getFirstOrderTableName":
+                return parseGetFirstOrderTableName();
+            case "getFirstOrderCoffeeName":
+                return parseGetFirstOrderCoffeeName();
+        }
         Token current = advance();
         if (current.getType() == TokenType.NUMBER) {
             return new NumberNode(current.getValue(), line);
@@ -366,7 +390,8 @@ public class Parser {
     }
 
     private boolean isBooleanOperator(String operator) {
-        return operator.equals("<") || operator.equals(">") || operator.equals("<=") || operator.equals(">=") || operator.equals("==") || operator.equals("!=");
+        return operator.equals("<") || operator.equals(">") || operator.equals("<=") || operator.equals(">=") || operator.equals("==") || operator.equals("!=")
+                || operator.equals("&&") || operator.equals("||");
     }
 
     private String parseDirection() {

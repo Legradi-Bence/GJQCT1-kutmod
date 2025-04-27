@@ -10,7 +10,6 @@ public class Order {
         this.orderedCoffee = orderedCoffee;
     }
 
-
     public Table getTable() {
         return table;
     }
@@ -18,5 +17,5 @@ public class Order {
     public CoffeeType getOrderedCoffee() {
         return orderedCoffee;
     }
-    
+
 }

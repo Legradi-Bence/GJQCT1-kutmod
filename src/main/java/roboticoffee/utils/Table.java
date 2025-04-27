@@ -41,6 +41,7 @@ public class Table {
     public void setOccupied(boolean occupied) {
         this.occupied = occupied;
     }
+
     public int getX() {
         return x;
     }
@@ -48,6 +49,7 @@ public class Table {
     public int getZ() {
         return z;
     }
+
     public Vector3f getPosition() {
         return new Vector3f(x, 0, z);
     }

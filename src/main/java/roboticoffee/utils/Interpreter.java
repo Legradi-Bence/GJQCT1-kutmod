@@ -17,6 +17,8 @@ import roboticoffee.utils.Nodes.DeclarationNode;
 import roboticoffee.utils.Nodes.ExpressionStatementNode;
 import roboticoffee.utils.Nodes.ForStatementNode;
 import roboticoffee.utils.Nodes.FunctionNode;
+import roboticoffee.utils.Nodes.GetFirstOrderCoffeeNameNode;
+import roboticoffee.utils.Nodes.GetFirstOrderTableNameNode;
 import roboticoffee.utils.Nodes.GetRobotPosXNode;
 import roboticoffee.utils.Nodes.GetRobotPosZNode;
 import roboticoffee.utils.Nodes.IdentifierNode;
@@ -43,13 +45,17 @@ public class Interpreter {
     private final Map<String, Node> functionCache = new HashMap<>();
     private String functionName;
     private ProgramStatus programState = ProgramStatus.STOPPED;
-    private long delay = 500;
+    private long delay = 700;
 
     public Interpreter(String functionName, RobotState robotState, PeopleState peopleState, CodeWindowControl codeWindowControl) {
         this.codeWindowControl = codeWindowControl;
         this.functionName = functionName;
         this.robotState = robotState;
         this.peopleState = peopleState;
+    }
+
+    public void clearFunctionCache() {
+        functionCache.clear();
     }
 
     public void setDelay(long delay) {
@@ -170,25 +176,30 @@ public class Interpreter {
         Table table = peopleState.getTableByCoords(robotState.getHeadPosition());
         Order order = robotState.getOrderByTable(table);
         if (order == null) {
-            return; 
+            return;
         } else if (order.getOrderedCoffee() == robotState.getInHand()) {
             robotState.setInHand(null);
             robotState.removeOrder(order);
             peopleState.leave(table);
-            System.out.println("Order placed: " + order.getOrderedCoffee() + " for table: " + order.getTable().getName());//
-            System.out.println("Nice");
-        } else {
-            System.out.println("Wrong coffee type! Want: " + order.getOrderedCoffee() + ", but got: " + robotState.getInHand());//
+            robotState.OnPrint("Order completed!");
         }
     }
 
     private void execute(PrintNode printNode) {
-        System.out.println(evaluate(printNode.getExpression()));
+        String m = evaluate(printNode.getExpression()).toString();
+        robotState.OnPrint(m);
+        System.out.println(m);
     }
 
     private void execute(TakeCoffeeNode takeCoffeeNode) {
-        int coffeeNumber = robotState.getCoffeeNumber();
-        System.out.println("In hand: " + robotState.getInHand());
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+        robotState.getCoffeeNumber();
+
     }
 
     private void execute(TakeOrderNode takeOrderNode) {
@@ -299,24 +310,27 @@ public class Interpreter {
     }
 
     private void execute(TurnStatementNode turnStatementNode) {
+
+        robotState.turn(turnStatementNode.getDirection());
         try {
             Thread.sleep(delay);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return;
         }
-        robotState.turn(turnStatementNode.getDirection());
     }
 
     private void execute(MoveStatementNode moveStatementNode) {
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return;
-        }
         if (evaluate(moveStatementNode.getDistance()) instanceof Number) {
-            robotState.move(((Number) evaluate(moveStatementNode.getDistance())).intValue());
+            for (int i = 0; i < ((Number) evaluate(moveStatementNode.getDistance())).intValue(); i++) {
+                robotState.move(1);
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
         } else {
             throw new IllegalArgumentException("Distance must be a number: " + moveStatementNode.getDistance());
         }
@@ -329,6 +343,12 @@ public class Interpreter {
     private void execute(WhileStatementNode whileStatementNode) {
         enterScope();
         while ((boolean) evaluate(whileStatementNode.getCondition())) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
             execute(whileStatementNode.getBody());
         }
         exitScope();
@@ -347,6 +367,12 @@ public class Interpreter {
             }
 
             while ((boolean) conditionResult) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
                 execute(forStatementNode.getBody());
                 evaluate(forStatementNode.getIterator());
                 conditionResult = evaluate(forStatementNode.getCondition());
@@ -598,6 +624,14 @@ public class Interpreter {
 
     }
 
+    private Object evaluate(GetFirstOrderCoffeeNameNode getFirstOrderCoffeeNameNode) {
+        return robotState.getFirstOrderCoffeeName();
+    }
+
+    private Object evaluate(GetFirstOrderTableNameNode getFirstOrderTableNameNode) {
+        return robotState.getFirstOrderTableName();
+    }
+
     private Object evaluate(Node node) {
         if (node instanceof NumberNode) {
             return evaluate((NumberNode) node);
@@ -623,6 +657,10 @@ public class Interpreter {
             return evaluate((GetRobotPosXNode) node);
         } else if (node instanceof GetRobotPosZNode) {
             return evaluate((GetRobotPosZNode) node);
+        } else if (node instanceof GetFirstOrderCoffeeNameNode) {
+            return evaluate((GetFirstOrderCoffeeNameNode) node);
+        } else if (node instanceof GetFirstOrderTableNameNode) {
+            return (evaluate((GetFirstOrderTableNameNode) node));
         } else {
             throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
         }
