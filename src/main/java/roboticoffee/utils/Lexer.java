@@ -10,7 +10,6 @@ public class Lexer {
     private final String input;
     private int position = 0;
     private int line = 1;
-    private int inlinePosition = 0;
     private static final Set<String> KEYWORDS = Set.of("if", "while", "for", "return", "int", "string", "boolean", "move", "turn", "true", "false", "north", "south",
             "east", "west", "left", "right", "back", "function", "takeOrder", "placeCoffee", "takeCoffee", "arePeopleWaiting", "print", "getRobotPosX", "getRobotPosZ",
             "getFirstOrderTableName", "getFirstOrderCoffeeName");
@@ -28,10 +27,8 @@ public class Lexer {
 
             if (Character.isWhitespace(currentChar)) {
                 position++;
-                inlinePosition++;
                 if (currentChar == '\n') {
                     line++;
-                    inlinePosition = 0;
                 }
                 continue;
             }

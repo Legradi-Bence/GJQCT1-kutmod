@@ -1,7 +1,6 @@
 package roboticoffee;
 
 import com.jme3.app.SimpleApplication;
-import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
 

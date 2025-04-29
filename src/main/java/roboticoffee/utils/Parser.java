@@ -1,10 +1,8 @@
 package roboticoffee.utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import roboticoffee.utils.Nodes.DeclarationNode;
-import roboticoffee.states.RobotState;
 import roboticoffee.utils.Nodes.ArePeopleWaitingNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;

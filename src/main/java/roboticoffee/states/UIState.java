@@ -1,6 +1,5 @@
 package roboticoffee.states;
 
-import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +7,6 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
-import com.jme3.scene.Node;
 
 import io.tlf.jme.jfx.JavaFxUI;
 import javafx.scene.control.Button;
@@ -18,15 +16,9 @@ import roboticoffee.utils.ConsoleControl;
 
 public class UIState extends AbstractAppState {
 
-    private final Node rootNode;
-    private final Node guiNode;
-
     private final static List<String> codeWindowNames = new ArrayList<>();
 
     public UIState(SimpleApplication app, RobotState robotState, PeopleState peopleState) {
-
-        rootNode = app.getRootNode();
-        guiNode = app.getGuiNode();
         CodeWindowConrolGenerator generator = new CodeWindowConrolGenerator(app, robotState, peopleState);
         JavaFxUI.initialize(app);
 

@@ -11,7 +11,6 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
 import roboticoffee.utils.LimitedQueue;
-import roboticoffee.utils.Order;
 import roboticoffee.utils.Person;
 import roboticoffee.utils.Table;
 
