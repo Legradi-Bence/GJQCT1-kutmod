@@ -78,28 +78,28 @@ public class Interpreter {
         scopeStack.pop();
     }
 
-    private void setVariable(String name, Object value) {
+    private void setVariable(String name, Object value) throws InterpreterException {
         if (!scopeStack.isEmpty()) {
             HashMap<String, Object> currentScope = scopeStack.peek();
             if (currentScope.containsKey(name)) {
-                throw new IllegalArgumentException("Variable '" + name + "' already exists in the current scope");
+                throw new InterpreterException("Variable '" + name + "' already exists in the current scope");
             }
             currentScope.put(name, value);
         } else {
-            throw new IllegalStateException("No scope available to set variable: " + name);
+            throw new InterpreterException("No scope available to set variable: " + name);
         }
     }
 
-    private Object getVariable(String name) {
+    private Object getVariable(String name) throws InterpreterException {
         for (int i = scopeStack.size() - 1; i >= 0; i--) {
             if (scopeStack.get(i).containsKey(name)) {
                 return scopeStack.get(i).get(name);
             }
         }
-        throw new IllegalArgumentException("Variable not found: " + name);
+        throw new InterpreterException("Variable not found: " + name);
     }
 
-    private void changeVariable(String name, Object value) {
+    private void changeVariable(String name, Object value) throws InterpreterException {
         if (!scopeStack.isEmpty()) {
 
             for (int i = scopeStack.size() - 1; i >= 0; i--) {
@@ -108,13 +108,13 @@ public class Interpreter {
                     return;
                 }
             }
-            throw new IllegalArgumentException("Variable not found: " + name);
+            throw new InterpreterException("Variable not found: " + name);
         } else {
-            throw new IllegalStateException("No scope available to set variable: " + name);
+            throw new InterpreterException("No scope available to set variable: " + name);
         }
     }
 
-    public void execute(Node node) {
+    public void execute(Node node) throws InterpreterException {
 
         Platform.runLater(() -> codeWindowControl.highlightLine(node.getLineNumber()));
 
@@ -185,10 +185,9 @@ public class Interpreter {
         }
     }
 
-    private void execute(PrintNode printNode) {
+    private void execute(PrintNode printNode) throws InterpreterException {
         String m = evaluate(printNode.getExpression()).toString();
         robotState.OnPrint(m);
-        System.out.println(m);
     }
 
     private void execute(TakeCoffeeNode takeCoffeeNode) {
@@ -213,7 +212,7 @@ public class Interpreter {
         }
     }
 
-    private void execute(ProgramNode programNode) {
+    private void execute(ProgramNode programNode) throws InterpreterException {
         enterScope();
         for (Node statement : programNode.getStatements()) {
             execute(statement);
@@ -221,7 +220,7 @@ public class Interpreter {
         exitScope();
     }
 
-    private void execute(BlockNode blockNode) {
+    private void execute(BlockNode blockNode) throws InterpreterException {
         enterScope();
         for (Node statement : blockNode.getStatements()) {
             execute(statement);
@@ -229,26 +228,33 @@ public class Interpreter {
         exitScope();
     }
 
-    private void execute(FunctionNode functionNode) {
+    private void execute(FunctionNode functionNode) throws InterpreterException {
         enterScope();
         String functionName = functionNode.getFunctionName();
 
         if (functionName.equals(this.functionName)) {
-            throw new IllegalArgumentException("Function cannot call itself: " + functionName);
+            throw new InterpreterException("Function cannot call itself: " + functionName, functionNode.getLineNumber());
         }
         Node functionBody = functionCache.get(functionName);
         if (functionBody == null) {
             if (!CodeWindowNames.getCodeWindowNames().contains(functionName)) {
-                throw new IllegalArgumentException("Function not found: " + functionName);
+                throw new InterpreterException("Function not found: " + functionName, functionNode.getLineNumber());
             }
 
             String code = CodeWindowNames.getCode(functionName);
 
-            Lexer lexer = new Lexer(code);
-            List<Token> tokens = lexer.tokenize();
-            Parser parser = new Parser(tokens);
-            ProgramNode programNode = parser.parse();
-
+            ProgramNode programNode = null;
+            try {
+                Lexer lexer = new Lexer(code);
+                List<Token> tokens = lexer.tokenize();
+                Parser parser = new Parser(tokens);
+                programNode = parser.parse();
+            } catch (Exception e) {
+                throw new InterpreterException("Failed to parse function: " + functionName, functionNode.getLineNumber());
+            }
+            if (programNode == null) {
+                throw new InterpreterException("Failed to parse function: " + functionName, functionNode.getLineNumber());
+            }
             functionCache.put(functionName, programNode);
 
             functionBody = programNode;
@@ -259,13 +265,13 @@ public class Interpreter {
         exitScope();
     }
 
-    private void execute(AssignmentNode assignmentNode) {
+    private void execute(AssignmentNode assignmentNode) throws InterpreterException {
         String variableName = assignmentNode.getIdentifier();
         Object value = evaluate(assignmentNode.getValue());
         changeVariable(variableName, value);
     }
 
-    private void execute(DeclarationNode declarationNode) {
+    private void execute(DeclarationNode declarationNode) throws InterpreterException {
         String variableName = declarationNode.getIdentifier();
         Object value = evaluate(declarationNode.getValue());
         String operator = declarationNode.getOperator();
@@ -293,19 +299,19 @@ public class Interpreter {
                         break;
                     case "/=":
                         if (numberValue.doubleValue() == 0) {
-                            throw new ArithmeticException("Division by zero");
+                            throw new InterpreterException("Division by zero", declarationNode.getLineNumber());
                         }
                         setVariable(variableName, currentNumber.doubleValue() / numberValue.doubleValue());
                         break;
                     default:
-                        throw new IllegalArgumentException("Unsupported assignment operator: " + operator);
+                        throw new InterpreterException("Unsupported assignment operator: " + operator, declarationNode.getLineNumber());
                 }
                 return;
             } else {
-                throw new IllegalArgumentException("Variable is not a number: " + variableName);
+                throw new InterpreterException("Variable is not a number: " + variableName, declarationNode.getLineNumber());
             }
         } else {
-            throw new IllegalArgumentException("Invalid assignment value: " + value);
+            throw new InterpreterException("Invalid assignment value: " + value, declarationNode.getLineNumber());
         }
     }
 
@@ -320,7 +326,7 @@ public class Interpreter {
         }
     }
 
-    private void execute(MoveStatementNode moveStatementNode) {
+    private void execute(MoveStatementNode moveStatementNode) throws InterpreterException {
         if (evaluate(moveStatementNode.getDistance()) instanceof Number) {
             for (int i = 0; i < ((Number) evaluate(moveStatementNode.getDistance())).intValue(); i++) {
                 robotState.move(1);
@@ -332,15 +338,15 @@ public class Interpreter {
                 }
             }
         } else {
-            throw new IllegalArgumentException("Distance must be a number: " + moveStatementNode.getDistance());
+            throw new InterpreterException("Distance must be a number: " + moveStatementNode.getDistance(), moveStatementNode.getLineNumber());
         }
     }
 
-    private void execute(ExpressionStatementNode expressionStatementNode) {
+    private void execute(ExpressionStatementNode expressionStatementNode) throws InterpreterException {
         execute(expressionStatementNode.getExpression());
     }
 
-    private void execute(WhileStatementNode whileStatementNode) {
+    private void execute(WhileStatementNode whileStatementNode) throws InterpreterException {
         enterScope();
         while ((boolean) evaluate(whileStatementNode.getCondition())) {
             try {
@@ -354,7 +360,7 @@ public class Interpreter {
         exitScope();
     }
 
-    private void execute(ForStatementNode forStatementNode) {
+    private void execute(ForStatementNode forStatementNode) throws InterpreterException {
         enterScope();
 
         try {
@@ -363,7 +369,7 @@ public class Interpreter {
 
             Object conditionResult = evaluate(forStatementNode.getCondition());
             if (!(conditionResult instanceof Boolean)) {
-                throw new IllegalArgumentException("For loop condition must evaluate to a boolean");
+                throw new InterpreterException("For loop condition must evaluate to a boolean", forStatementNode.getLineNumber());
             }
 
             while ((boolean) conditionResult) {
@@ -382,18 +388,15 @@ public class Interpreter {
         }
     }
 
-    private void execute(IfStatementNode ifStatementNode) {
+    private void execute(IfStatementNode ifStatementNode) throws InterpreterException {
         enterScope();
         if ((boolean) evaluate(ifStatementNode.getCondition())) {
             execute(ifStatementNode.getThenBlock());
         }
-        // else if (ifStatementNode.getElseBlock() != null) {
-        // execute(ifStatementNode.getElseBlock());
-        // }
         exitScope();
     }
 
-    private Object evaluate(PostfixIncrementDecrementNode postfixIncrementDecrementNode) {
+    private Object evaluate(PostfixIncrementDecrementNode postfixIncrementDecrementNode) throws InterpreterException {
         String variableName = postfixIncrementDecrementNode.getVariable();
         Object currentValue = getVariable(variableName);
         if (currentValue instanceof Number) {
@@ -407,11 +410,11 @@ public class Interpreter {
             changeVariable(variableName, newValue);
             return oldValue;
         } else {
-            throw new IllegalArgumentException("Variable is not a number: " + variableName);
+            throw new InterpreterException("Variable is not a number: " + variableName, postfixIncrementDecrementNode.getLineNumber());
         }
     }
 
-    private Object evaluate(PrefixIncrementDecrementNode prefixIncrementDecrementNode) {
+    private Object evaluate(PrefixIncrementDecrementNode prefixIncrementDecrementNode) throws InterpreterException {
         String variableName = prefixIncrementDecrementNode.getVariable();
         Object currentValue = getVariable(variableName);
         if (currentValue instanceof Number) {
@@ -424,11 +427,11 @@ public class Interpreter {
             changeVariable(variableName, newValue);
             return newValue;
         } else {
-            throw new IllegalArgumentException("Variable is not a number: " + variableName);
+            throw new InterpreterException("Variable is not a number: " + variableName, prefixIncrementDecrementNode.getLineNumber());
         }
     }
 
-    private Object evaluate(DeclarationNode declarationNode) {
+    private Object evaluate(DeclarationNode declarationNode) throws InterpreterException {
         String variableName = declarationNode.getIdentifier();
         Object value = evaluate(declarationNode.getValue());
         String operator = declarationNode.getOperator();
@@ -456,23 +459,23 @@ public class Interpreter {
                         break;
                     case "/=":
                         if (numberValue.doubleValue() == 0) {
-                            throw new ArithmeticException("Division by zero");
+                            throw new InterpreterException("Division by zero", declarationNode.getLineNumber());
                         }
                         setVariable(variableName, currentNumber.doubleValue() / numberValue.doubleValue());
                         break;
                     default:
-                        throw new IllegalArgumentException("Unsupported assignment operator: " + operator);
+                        throw new InterpreterException("Unsupported assignment operator: " + operator, declarationNode.getLineNumber());
                 }
                 return getVariable(variableName);
             } else {
-                throw new IllegalArgumentException("Variable is not a number: " + variableName);
+                throw new InterpreterException("Variable is not a number: " + variableName, declarationNode.getLineNumber());
             }
         } else {
-            throw new IllegalArgumentException("Invalid assignment value: " + value);
+            throw new InterpreterException("Invalid assignment value: " + value, declarationNode.getLineNumber());
         }
     }
 
-    private Object evaluate(AssignmentNode assignmentNode) {
+    private Object evaluate(AssignmentNode assignmentNode) throws InterpreterException {
         String variableName = assignmentNode.getIdentifier();
         Object value = evaluate(assignmentNode.getValue());
         String operator = assignmentNode.getOperator();
@@ -500,23 +503,23 @@ public class Interpreter {
                         break;
                     case "/=":
                         if (numberValue.doubleValue() == 0) {
-                            throw new ArithmeticException("Division by zero");
+                            throw new InterpreterException("Division by zero", assignmentNode.getLineNumber());
                         }
                         changeVariable(variableName, currentNumber.doubleValue() / numberValue.doubleValue());
                         break;
                     default:
-                        throw new IllegalArgumentException("Unsupported assignment operator: " + operator);
+                        throw new InterpreterException("Unsupported assignment operator: " + operator, assignmentNode.getLineNumber());
                 }
                 return getVariable(variableName);
             } else {
-                throw new IllegalArgumentException("Variable is not a number: " + variableName);
+                throw new InterpreterException("Variable is not a number: " + variableName, assignmentNode.getLineNumber());
             }
         } else {
-            throw new IllegalArgumentException("Invalid assignment value: " + value);
+            throw new InterpreterException("Invalid assignment value: " + value, assignmentNode.getLineNumber());
         }
     }
 
-    private Object evaluate(BinaryExpressionNode binaryExpressionNode) {
+    private Object evaluate(BinaryExpressionNode binaryExpressionNode) throws InterpreterException {
         Object left = evaluate(binaryExpressionNode.getLeft());
         Object right = evaluate(binaryExpressionNode.getRight());
         String operator = binaryExpressionNode.getOperator();
@@ -534,7 +537,7 @@ public class Interpreter {
                     return leftValue * rightValue;
                 case "/":
                     if (rightValue == 0) {
-                        throw new ArithmeticException("Division by zero");
+                        throw new InterpreterException("Division by zero", binaryExpressionNode.getLineNumber());
                     }
                     return leftValue / rightValue;
                 case "%":
@@ -552,7 +555,7 @@ public class Interpreter {
                 case "<=":
                     return leftValue <= rightValue;
                 default:
-                    throw new IllegalArgumentException("Unsupported operator: " + operator);
+                    throw new InterpreterException("Unsupported operator: " + operator, binaryExpressionNode.getLineNumber());
             }
         } else if (left instanceof Boolean && right instanceof Boolean) {
             boolean leftValue = (Boolean) left;
@@ -568,7 +571,7 @@ public class Interpreter {
                 case "!=":
                     return leftValue != rightValue;
                 default:
-                    throw new IllegalArgumentException("Unsupported operator for boolean: " + operator);
+                    throw new InterpreterException("Unsupported operator for boolean: " + operator, binaryExpressionNode.getLineNumber());
             }
         } else if (left instanceof String && right instanceof String) {
             String leftValue = (String) left;
@@ -582,17 +585,17 @@ public class Interpreter {
                 case "!=":
                     return !leftValue.equals(rightValue);
                 default:
-                    throw new IllegalArgumentException("Unsupported operator for string: " + operator);
+                    throw new InterpreterException("Unsupported operator for string: " + operator, binaryExpressionNode.getLineNumber());
             }
         } else if (operator.equals("==") || operator.equals("!=")) {
             boolean isEqual = left.equals(right);
             return operator.equals("==") ? isEqual : !isEqual;
         } else {
-            throw new IllegalArgumentException("Operands must be compatible types: " + left + ", " + right);
+            throw new InterpreterException("Operands must be compatible types: " + left + ", " + right, binaryExpressionNode.getLineNumber());
         }
     }
 
-    private Object evaluate(IdentifierNode identifierNode) {
+    private Object evaluate(IdentifierNode identifierNode) throws InterpreterException {
         String variableName = identifierNode.getIdentifier();
         return getVariable(variableName);
     }
@@ -632,7 +635,7 @@ public class Interpreter {
         return robotState.getFirstOrderTableName();
     }
 
-    private Object evaluate(Node node) {
+    private Object evaluate(Node node) throws InterpreterException {
         if (node instanceof NumberNode) {
             return evaluate((NumberNode) node);
         } else if (node instanceof IdentifierNode) {
@@ -662,7 +665,7 @@ public class Interpreter {
         } else if (node instanceof GetFirstOrderTableNameNode) {
             return (evaluate((GetFirstOrderTableNameNode) node));
         } else {
-            throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
+            throw new InterpreterException("Unsupported node type: " + node.getClass().getName(), node.getLineNumber());
         }
     }
 }

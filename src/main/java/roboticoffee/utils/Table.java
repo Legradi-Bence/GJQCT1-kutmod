@@ -5,6 +5,8 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
+import roboticoffee.RobotiCoffee;
+
 public class Table {
     private String name;
     private boolean occupied;
@@ -22,7 +24,7 @@ public class Table {
         tableNode.setName(name);
         tableNode.setLocalTranslation(x, 0, z);
         tableNode.setLocalRotation(new com.jme3.math.Quaternion().fromAngleAxis(FastMath.HALF_PI, new com.jme3.math.Vector3f(0, 1, 0)));
-        rootNode.attachChild(tableNode);
+        RobotiCoffee.getInstance().enqueue(() -> {rootNode.attachChild(tableNode);});
 
     }
 

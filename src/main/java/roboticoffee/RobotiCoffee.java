@@ -16,6 +16,7 @@ import roboticoffee.states.UIState;
  * java classes
  */
 public class RobotiCoffee extends SimpleApplication {
+    private static RobotiCoffee instance;
 
     private Node rootNode;
 
@@ -23,7 +24,7 @@ public class RobotiCoffee extends SimpleApplication {
 
     public static void main(String[] args) {
         RobotiCoffee app = new RobotiCoffee();
-
+        instance = app;
         AppSettings settings = new AppSettings(true);
         settings.setTitle("RobotiCoffee");
 
@@ -66,21 +67,14 @@ public class RobotiCoffee extends SimpleApplication {
         peopleState.addTable("Table_13_9", 13, 9);
     }
 
-    @Override
-    public void simpleUpdate(float tpf) {
-
-    }
-
-    @Override
-    public void simpleRender(RenderManager rm) {
-        // TODO: add render code
-    }
-
     public PeopleState getPeopleState() {
         return stateManager.getState(PeopleState.class);
     }
 
     public RobotState getRobotState() {
         return stateManager.getState(RobotState.class);
+    }
+    public static RobotiCoffee getInstance() {
+        return instance;
     }
 }

@@ -18,7 +18,7 @@ public class ConsoleControl extends StackPane {
 
         consoleLabel = new TextArea();
         consoleLabel.setEditable(false);
-        consoleLabel.setWrapText(true);
+        consoleLabel.setWrapText(false);
         consoleLabel.setStyle("-fx-control-inner-background: black; -fx-background-color: black; -fx-font-size: 20px; -fx-text-fill: white; -fx-font-weight: bold;");
 
         VBox content = new VBox(10);

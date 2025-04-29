@@ -26,6 +26,7 @@ public class CodeWindowControl extends StackPane {
     private Button pauseButton;
     private Button stopButton;
     private Task<Void> currentTask;
+    private static boolean isCodeRunning = false;
 
     public CodeWindowControl(String name, RobotState robotState, PeopleState peopleState) {
         this.robotState = robotState;
@@ -86,6 +87,8 @@ public class CodeWindowControl extends StackPane {
 
     private void onStopButtonClicked() {
         interpreter.setProgramStatus(ProgramStatus.STOPPED);
+        interpreter.clearFunctionCache();
+        isCodeRunning = false;
 
         if (currentTask != null && currentTask.isRunning()) {
             currentTask.cancel();
@@ -105,6 +108,9 @@ public class CodeWindowControl extends StackPane {
     }
 
     private void onRunButtonClicked() {
+        if (isCodeRunning) {
+            return;
+        }
         if (currentTask != null && currentTask.isRunning()) {
             if (interpreter.getProgramStatus() == ProgramStatus.PAUSED) {
                 interpreter.setProgramStatus(ProgramStatus.RUNNING);
@@ -112,22 +118,36 @@ public class CodeWindowControl extends StackPane {
                 pauseButton.setDisable(false);
                 stopButton.setDisable(false);
             } else {
-                System.out.println("A program már fut!");
             }
             return;
         }
-        interpreter.setProgramStatus(ProgramStatus.RUNNING);
+        interpreter.clearFunctionCache();
+        ProgramNode programNode[] = new ProgramNode[1];
+        try {
+            Lexer lexer = new Lexer(textArea.getText());
+            List<Token> tokens = lexer.tokenize();
+            Parser parser = new Parser(tokens);
+            programNode[0] = parser.parse();
+        } catch (InterpreterException e) {
+            robotState.OnPrint(e.toString());
+            return;
+        }
+        if (programNode[0] == null) {
+            return;
+        }
+        isCodeRunning = true;
         runButton.setDisable(true);
         pauseButton.setDisable(false);
         stopButton.setDisable(false);
-        Lexer lexer = new Lexer(textArea.getText());
-        List<Token> tokens = lexer.tokenize();
-        Parser parser = new Parser(tokens);
-        ProgramNode programNode = parser.parse();
+        interpreter.setProgramStatus(ProgramStatus.RUNNING);
         currentTask = new Task<>() {
             @Override
             protected Void call() {
-                interpreter.execute(programNode);
+                try {
+                    interpreter.execute(programNode[0]);
+                } catch (InterpreterException e) {
+                    throw new RuntimeException(e);
+                }
                 return null;
             }
 
@@ -138,6 +158,7 @@ public class CodeWindowControl extends StackPane {
                 pauseButton.setDisable(true);
                 stopButton.setDisable(true);
                 currentTask = null;
+                isCodeRunning = false;
             }
 
             @Override
@@ -147,6 +168,11 @@ public class CodeWindowControl extends StackPane {
                 pauseButton.setDisable(true);
                 stopButton.setDisable(true);
                 currentTask = null;
+                isCodeRunning = false;
+                Throwable exception = getException();
+                if (exception != null) {
+                    robotState.OnPrint(exception.getMessage());
+                }
             }
         };
 

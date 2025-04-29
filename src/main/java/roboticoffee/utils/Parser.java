@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import roboticoffee.utils.Nodes.DeclarationNode;
+import roboticoffee.states.RobotState;
 import roboticoffee.utils.Nodes.ArePeopleWaitingNode;
 import roboticoffee.utils.Nodes.AssignmentNode;
 import roboticoffee.utils.Nodes.BinaryExpressionNode;
@@ -41,7 +42,7 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public ProgramNode parse() {
+    public ProgramNode parse() throws InterpreterException {
         ProgramNode programNode = new ProgramNode(0);
         while (!isAtEnd()) {
             programNode.addStatement(parseStatement());
@@ -49,7 +50,7 @@ public class Parser {
         return programNode;
     }
 
-    private Node parseStatement() {
+    private Node parseStatement() throws InterpreterException {
         Token current = peek();
         if (current.getType() == TokenType.KEYWORD) {
             switch (current.getValue()) {
@@ -80,42 +81,42 @@ public class Parser {
                 case "getFirstOrderCoffeeName":
                     return parseGetFirstOrderCoffeeName();
                 default:
-                    throw new IllegalArgumentException("Unexpected keyword: " + current.getValue());
+                    throw new InterpreterException("Unexpected keyword: " + current.getValue(), line);
             }
         } else {
             return parseExpressionStatement();
         }
     }
 
-    private Node parseGetFirstOrderCoffeeName() {
+    private Node parseGetFirstOrderCoffeeName() throws InterpreterException {
         consume(TokenType.KEYWORD, "getFirstOrderCoffeeName");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         return new GetFirstOrderCoffeeNameNode(line);
     }
 
-    private Node parseGetFirstOrderTableName() {
+    private Node parseGetFirstOrderTableName() throws InterpreterException {
         consume(TokenType.KEYWORD, "getFirstOrderTableName");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         return new GetFirstOrderTableNameNode(line);
     }
 
-    private Node parseGetRobotPosZ() {
+    private Node parseGetRobotPosZ() throws InterpreterException {
         consume(TokenType.KEYWORD, "getRobotPosZ");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         return new GetRobotPosZNode(line);
     }
 
-    private Node parseGetRobotPosX() {
+    private Node parseGetRobotPosX() throws InterpreterException {
         consume(TokenType.KEYWORD, "getRobotPosX");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         return new GetRobotPosXNode(line);
     }
 
-    private Node parsePrint() {
+    private Node parsePrint() throws InterpreterException {
         consume(TokenType.KEYWORD, "print");
         consume(TokenType.OPEN_PAREN, "(");
         Node expression = parseExpression();
@@ -124,14 +125,14 @@ public class Parser {
         return new PrintNode(expression, line);
     }
 
-    private Node parseArePeopleWaiting() {
+    private Node parseArePeopleWaiting() throws InterpreterException {
         consume(TokenType.KEYWORD, "arePeopleWaiting");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
         return new ArePeopleWaitingNode(line);
     }
 
-    private Node parseTakeCoffee() {
+    private Node parseTakeCoffee() throws InterpreterException {
         consume(TokenType.KEYWORD, "takeCoffee");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
@@ -139,7 +140,7 @@ public class Parser {
         return new TakeCoffeeNode(line);
     }
 
-    private Node parsePlaceCoffee() {
+    private Node parsePlaceCoffee() throws InterpreterException {
         consume(TokenType.KEYWORD, "placeCoffee");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
@@ -147,7 +148,7 @@ public class Parser {
         return new PlaceCoffeeNode(line);
     }
 
-    private Node parseTakeOrder() {
+    private Node parseTakeOrder() throws InterpreterException {
         consume(TokenType.KEYWORD, "takeOrder");
         consume(TokenType.OPEN_PAREN, "(");
         consume(TokenType.CLOSE_PAREN, ")");
@@ -155,7 +156,7 @@ public class Parser {
         return new TakeOrderNode(line);
     }
 
-    private Node parseExpressionStatement() {
+    private Node parseExpressionStatement() throws InterpreterException {
         Node expression = parseExpression();
         consume(TokenType.SEMICOLON, ";");
         if (expression instanceof BinaryExpressionNode) {
@@ -168,14 +169,14 @@ public class Parser {
         return new ExpressionStatementNode(expression, line);
     }
 
-    private Node parseFunction() {
+    private Node parseFunction() throws InterpreterException {
         consume(TokenType.KEYWORD, "function");
         Token functionName = consume(TokenType.IDENTIFIER, null);
         consume(TokenType.SEMICOLON, ";");
         return new FunctionNode(functionName.getValue(), line);
     }
 
-    private Node parseWhileStatement() {
+    private Node parseWhileStatement() throws InterpreterException {
         consume(TokenType.KEYWORD, "while");
         consume(TokenType.OPEN_PAREN, "(");
         Node condition = parseCondition();
@@ -184,7 +185,7 @@ public class Parser {
         return new WhileStatementNode(condition, body, line);
     }
 
-    private Node parseForStatement() {
+    private Node parseForStatement() throws InterpreterException {
         consume(TokenType.KEYWORD, "for");
         consume(TokenType.OPEN_PAREN, "(");
 
@@ -202,7 +203,7 @@ public class Parser {
         return new ForStatementNode(initialization, condition, increment, body, line);
     }
 
-    private Node parseIfStatement() {
+    private Node parseIfStatement() throws InterpreterException {
         consume(TokenType.KEYWORD, "if");
         consume(TokenType.OPEN_PAREN, "(");
         Node condition = parseCondition();
@@ -211,7 +212,7 @@ public class Parser {
         return new IfStatementNode(condition, body, line);
     }
 
-    private Node parseMoveStatement() {
+    private Node parseMoveStatement() throws InterpreterException {
         consume(TokenType.KEYWORD, "move");
         consume(TokenType.OPEN_PAREN, "(");
         Node expression = parseExpression();
@@ -220,7 +221,7 @@ public class Parser {
         return new MoveStatementNode(expression, line);
     }
 
-    private Node parseTurnStatement() {
+    private Node parseTurnStatement() throws InterpreterException {
         consume(TokenType.KEYWORD, "turn");
         consume(TokenType.OPEN_PAREN, "(");
         String direction = parseDirection();
@@ -229,20 +230,18 @@ public class Parser {
         return new TurnStatementNode(direction, line);
     }
 
-    private Node parseExpression() {
+    private Node parseExpression() throws InterpreterException {
 
         return parseExpressionWithPrecedence(0);
     }
 
-    private Node parseExpressionWithPrecedence(int minPrecedence) {
+    private Node parseExpressionWithPrecedence(int minPrecedence) throws InterpreterException {
         Token current = peek();
-
         if (isOperator(current) && (current.getValue().equals("++") || current.getValue().equals("--"))) {
             Token operator = advance();
-
             Token operandToken = peek();
             if (operandToken.getType() != TokenType.IDENTIFIER) {
-                throw new IllegalArgumentException("Expected a variable name after " + operator.getValue() + ", but found: " + operandToken.getValue());
+                throw new InterpreterException("Expected a variable name after " + operator.getValue() + ", but found: " + operandToken.getValue(), line);
             }
 
             IdentifierNode operand = new IdentifierNode(advance().getValue(), line);
@@ -250,7 +249,6 @@ public class Parser {
         }
 
         Node left = parsePrimary();
-
         while (!isAtEnd() && isOperator(peek()) && getPrecedence(peek()) >= minPrecedence) {
             Token operator = advance();
             int precedence = getPrecedence(operator);
@@ -264,7 +262,7 @@ public class Parser {
         return left;
     }
 
-    private Node parsePrimary() {
+    private Node parsePrimary() throws InterpreterException {
         switch (peek().getValue()) {
             case "arePeopleWaiting":
                 return parseArePeopleWaiting();
@@ -295,7 +293,7 @@ public class Parser {
             consume(TokenType.CLOSE_PAREN, ")");
             return expression;
         } else {
-            throw new IllegalArgumentException("Unexpected token: " + current);
+            throw new InterpreterException("Unexpected token: " + current, line);
         }
     }
 
@@ -303,7 +301,7 @@ public class Parser {
         return token.getType() == TokenType.OPERATOR;
     }
 
-    private int getPrecedence(Token token) {
+    private int getPrecedence(Token token) throws InterpreterException {
         int precedence = switch (token.getValue()) {
             case "++", "--" -> 9;
             case "!" -> 8;
@@ -318,7 +316,7 @@ public class Parser {
         };
 
         if (precedence == -1) {
-            throw new IllegalArgumentException("Unknown operator: " + token.getValue());
+            throw new InterpreterException("Unknown operator: " + token.getValue(), line);
         }
         return precedence;
     }
@@ -328,15 +326,15 @@ public class Parser {
                 || operator.getValue().equals("/=");
     }
 
-    private Node parsePostfixIncrementOrDecrement(IdentifierNode identifier) {
+    private Node parsePostfixIncrementOrDecrement(IdentifierNode identifier) throws InterpreterException {
         Token operator = advance();
         if (operator.getValue().equals("++") || operator.getValue().equals("--")) {
             return new PostfixIncrementDecrementNode(identifier.getIdentifier(), operator.getValue(), line);
         }
-        throw new IllegalArgumentException("Expected '++' or '--', but found: " + operator.getValue());
+        throw new InterpreterException("Expected '++' or '--', but found: " + operator.getValue(), line);
     }
 
-    private Node parseAssignment() {
+    private Node parseAssignment() throws InterpreterException {
         Token typeToken = null;
         if (check(TokenType.KEYWORD) && (peek().getValue().equals("int") || peek().getValue().equals("string") || peek().getValue().equals("boolean"))) {
             typeToken = advance();
@@ -349,17 +347,17 @@ public class Parser {
             return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value, line);
         } else if (operator.getValue().equals("+=") || operator.getValue().equals("-=") || operator.getValue().equals("*=") || operator.getValue().equals("/=")) {
             if (typeToken.getValue() != "int") {
-                throw new IllegalArgumentException("Type " + typeToken.getValue() + " is not allowed for " + operator.getValue());
+                throw new InterpreterException("Type " + typeToken.getValue() + " is not allowed for " + operator.getValue(), line);
             }
             Node value = parseExpression();
             consume(TokenType.SEMICOLON, ";");
             return new DeclarationNode(typeToken.getValue(), identifier.getValue(), operator.getValue(), value, line);
 
         }
-        throw new IllegalArgumentException("Expected assignment operator, but found: " + operator.getValue());
+        throw new InterpreterException("Expected assignment operator, but found: " + operator.getValue(), line);
     }
 
-    private Node parseBlock() {
+    private Node parseBlock() throws InterpreterException {
         consume(TokenType.OPEN_BRACE, "{");
         BlockNode blockNode = new BlockNode(line);
         while (!isAtEnd() && !check(TokenType.CLOSE_BRACE)) {
@@ -369,7 +367,7 @@ public class Parser {
         return blockNode;
     }
 
-    private Node parseCondition() {
+    private Node parseCondition() throws InterpreterException {
 
         Node cond = parseExpression();
         if (cond instanceof BinaryExpressionNode) {
@@ -377,7 +375,7 @@ public class Parser {
             if (isBooleanOperator(binaryExpressionNode.getOperator())) {
                 return cond;
             } else {
-                throw new IllegalArgumentException("Expected a boolean expression, but found: " + binaryExpressionNode.getOperator());
+                throw new InterpreterException("Expected a boolean expression, but found: " + binaryExpressionNode.getOperator(), line);
             }
 
         } else if (cond instanceof IdentifierNode) {
@@ -386,7 +384,7 @@ public class Parser {
             return cond;
 
         }
-        throw new IllegalArgumentException("Expected a boolean expression, but found: " + peek());
+        throw new InterpreterException("Expected a boolean expression, but found: " + peek(), line);
     }
 
     private boolean isBooleanOperator(String operator) {
@@ -394,12 +392,12 @@ public class Parser {
                 || operator.equals("&&") || operator.equals("||");
     }
 
-    private String parseDirection() {
+    private String parseDirection() throws InterpreterException {
         Token current = advance();
         if (current.getType() == TokenType.KEYWORD && isDirection(current.getValue())) {
             return current.getValue();
         }
-        throw new IllegalArgumentException("Invalid direction: " + current.getValue());
+        throw new InterpreterException("Invalid direction: " + current.getValue(), line);
     }
 
     private boolean isDirection(String direction) {
@@ -407,21 +405,21 @@ public class Parser {
                 || direction.equals("right") || direction.equals("back");
     }
 
-    private Token peek() {
+    private Token peek() throws InterpreterException {
         if (isAtEnd()) {
             return null;
         }
         return tokens.get(position);
     }
 
-    private Token advance() {
+    private Token advance() throws InterpreterException {
         if (!isAtEnd()) {
             position++;
         }
         return previous();
     }
 
-    private Token previous() {
+    private Token previous() throws InterpreterException {
         if (position == 0) {
             return null;
         }
@@ -432,17 +430,17 @@ public class Parser {
         return position >= tokens.size();
     }
 
-    private boolean check(TokenType type) {
+    private boolean check(TokenType type) throws InterpreterException {
         if (isAtEnd()) return false;
         return peek().getType() == type;
     }
 
-    private Token consume(TokenType type, String value) {
+    private Token consume(TokenType type, String value) throws InterpreterException {
         if (check(type) && (value == null || peek().getValue().equals(value))) {
             line = peek().getLineNumber();
             return advance();
         } else {
-            throw new IllegalArgumentException("Expected " + value + " but found " + peek());
+            throw new InterpreterException("Expected " + value + " but found " + peek(), line);
         }
     }
 }

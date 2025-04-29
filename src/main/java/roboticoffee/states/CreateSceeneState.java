@@ -13,6 +13,8 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
+import roboticoffee.RobotiCoffee;
+
 /**
  *
  * @author Bence
@@ -56,8 +58,7 @@ public class CreateSceeneState extends AbstractAppState {
 
     @Override
     public void cleanup() {
-        rootNode.detachChild(localRootNode);
-
+        RobotiCoffee.getInstance().enqueue(() -> rootNode.detachChild(localRootNode));
         super.cleanup();
     }
 
@@ -66,7 +67,7 @@ public class CreateSceeneState extends AbstractAppState {
         Spatial shopModel = assetManager.loadModel("Models/Epulet.glb");
         shopModel.setLocalRotation(new Quaternion().fromAngles(0, FastMath.PI, 0));
         shopModel.setLocalTranslation(0, 0, 0);
-        shop.attachChild(shopModel);
+        RobotiCoffee.getInstance().enqueue(() -> shop.attachChild(shopModel));
         return shop;
     }
 

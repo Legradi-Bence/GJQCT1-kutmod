@@ -17,7 +17,6 @@ import roboticoffee.utils.Table;
 
 public class PeopleState extends AbstractAppState {
 
-    private final SimpleApplication simpleApp;
     private final Node rootNode;
     private final Node localRootNode = new Node("PeopleNode");
     private List<Table> tables = new ArrayList<>();
@@ -29,18 +28,19 @@ public class PeopleState extends AbstractAppState {
     private Spatial femaleStandingModel;
     private Spatial femaleSittingModel;
     private Spatial coffeeModel;
+    private Spatial tableModel;
     private float spawnTimeInterval = 1;
     Random random = new Random();
 
-    public PeopleState(SimpleApplication app) {
-        simpleApp = app;
-        rootNode = app.getRootNode();
+    public PeopleState(SimpleApplication simpleApp) {
+        rootNode = simpleApp.getRootNode();
         rootNode.attachChild(localRootNode);
         maleStandingModel = simpleApp.getAssetManager().loadModel("Models/Ferfiallo.glb");
         maleSittingModel = simpleApp.getAssetManager().loadModel("Models/Ferfiulo.glb");
         femaleStandingModel = simpleApp.getAssetManager().loadModel("Models/Noallo.glb");
         femaleSittingModel = simpleApp.getAssetManager().loadModel("Models/Noulo.glb");
         coffeeModel = simpleApp.getAssetManager().loadModel("Models/Poharasztalon.glb");
+        tableModel = simpleApp.getAssetManager().loadModel("Models/Szekesasztal.glb");
 
     }
 
@@ -78,9 +78,9 @@ public class PeopleState extends AbstractAppState {
         Random rnd = new Random();
         int randomIndex = rnd.nextInt(2);
         if (randomIndex == 0) {
-            person = new Person(simpleApp, localRootNode, maleStandingModel.clone(), maleSittingModel.clone(), coffeeModel.clone(), name, x, z);
+            person = new Person(localRootNode, maleStandingModel.clone(), maleSittingModel.clone(), coffeeModel.clone(), name, x, z);
         } else {
-            person = new Person(simpleApp, localRootNode, femaleStandingModel.clone(), femaleSittingModel.clone(), coffeeModel.clone(), name, x, z);
+            person = new Person(localRootNode, femaleStandingModel.clone(), femaleSittingModel.clone(), coffeeModel.clone(), name, x, z);
         }
         person.setTable(table);
         people.add(person);
@@ -135,7 +135,7 @@ public class PeopleState extends AbstractAppState {
 
     public void addTable(String name, int x, int z) {
 
-        Table table = new Table(localRootNode, simpleApp.getAssetManager().loadModel("Models/Szekesasztal.glb"), name, x, z);
+        Table table = new Table(localRootNode, tableModel.clone(), name, x, z);
         tables.add(table);
     }
 

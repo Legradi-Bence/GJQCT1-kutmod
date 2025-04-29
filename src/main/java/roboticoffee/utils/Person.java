@@ -2,15 +2,15 @@ package roboticoffee.utils;
 
 import java.util.Random;
 
-import com.jme3.app.SimpleApplication;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 
+import roboticoffee.RobotiCoffee;
+
 public class Person {
-    private SimpleApplication simpleApp;
     private Node rootNode;
     private String name;
     private Vector3f destination = null;
@@ -28,8 +28,7 @@ public class Person {
     private boolean left = false;
     private float leavingTime = 100;
 
-    public Person(SimpleApplication simpleApp, Node rootNode, Spatial person, Spatial personSitting, Spatial coffee, String name, int x, int z) {
-        this.simpleApp = simpleApp;
+    public Person(Node rootNode, Spatial person, Spatial personSitting, Spatial coffee, String name, int x, int z) {
         this.rootNode = rootNode;
         this.name = name;
         this.destination = counterPos;
@@ -150,7 +149,7 @@ public class Person {
     }
 
     private void placeCoffee() {
-        simpleApp.enqueue(() -> {
+        RobotiCoffee.getInstance().enqueue(() -> {
             rootNode.attachChild(coffee);
             coffee.setLocalTranslation(table.getPosition().add(0, 0, 0));
             return null;
@@ -158,7 +157,7 @@ public class Person {
     }
 
     private void removeCoffee() {
-        simpleApp.enqueue(() -> {
+        RobotiCoffee.getInstance().enqueue(() ->  {
             rootNode.detachChild(coffee);
             return null;
         });

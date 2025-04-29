@@ -133,7 +133,6 @@ public class RobotState extends AbstractAppState {
         int newX = robotPosX;
         int newZ = robotPosZ;
         for (int i = 0; i < steps; i++) {
-            // Egyesével lépj a megadott irányba
             switch (robotDirection) {
                 case NORTH:
                     newZ++;
@@ -149,9 +148,7 @@ public class RobotState extends AbstractAppState {
                     break;
             }
 
-            // Ellenőrizd az aktuális pozíciót
             if (!isPositionValid(newX, newZ)) {
-                System.out.println("Cannot move to position: (" + newX + ", " + newZ + "). Obstacle detected!");
                 break;
             } else {
                 robotPosX = newX;
@@ -263,7 +260,7 @@ public class RobotState extends AbstractAppState {
 
     @Override
     public void cleanup() {
-        rootNode.detachChild(localRootNode);
+        RobotiCoffee.getInstance().enqueue(() -> rootNode.detachChild(localRootNode));
     }
 
     public boolean arePeopleWaiting() {
@@ -289,9 +286,7 @@ public class RobotState extends AbstractAppState {
 
     public void removeOrder(Order order) {
         if (orders.remove(order)) {
-            System.out.println("Order removed: " + order);
         } else {
-            System.out.println("Order not found: " + order);
 
         }
         OnOrderChanged();
