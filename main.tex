@@ -1,0 +1,33 @@
+\documentclass[sigconf]{acmart}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{natbib}
+\title{Introduction and Related Work: AI-driven Autonomous Database Systems}
+\author{Prepared by Legradi Bence}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+With the growing scale of data-intensive applications and the increasing adoption of cloud-native systems, autonomous database systems have become a central research area. These systems—often described as \textit{self-tuning} and \textit{self-healing}—use artificial intelligence (AI) and machine learning (ML) techniques to automate administrative operations such as query optimization, indexing, anomaly detection, and fault recovery. Instead of manual configuration, AI-based approaches aim to continuously optimize system performance while minimizing human intervention. Several recent works in 2024 have highlighted advancements in automatic schema design, reinforcement learning-based tuning, and adaptive learned index frameworks \citep{mozaffari2024selftuning, bhattarai2024novel, rachapalli2024selfhealing, heidari2024uplif}. The 2025 systematic review provides a broader context summarizing progress between 2020 and 2025 \citep{nzenwata2025autonomous}.
+
+\section*{Background and Related Work}
+Mozaffari et al. (2024) conducted a comprehensive systematic review on automatic database schema design and tuning. Their taxonomy categorizes AI-based tuning methods according to their optimization goals and data representation models, covering both SQL and NoSQL environments. The authors identified open challenges such as the absence of unified benchmarks and the limited explainability of ML-driven systems, which remain barriers to widespread industrial adoption \citep{mozaffari2024selftuning}.
+
+Bhattarai and Thapaliya (2024) proposed an RL-based self-tuning mechanism that dynamically adapts configuration parameters, indexing strategies, and memory allocation. Their experiments showed that reinforcement learning policies outperform traditional rule-based optimizers in varying workloads \citep{bhattarai2024novel}. This follows a larger trend where hierarchical multi-armed bandit and deep reinforcement learning methods are used to explore high-dimensional configuration spaces efficiently.
+
+Self-healing database systems focus on reliability and fault tolerance. Rachapalli (2024) summarized the state of AI-driven anomaly detection and self-repair mechanisms, focusing on autoencoder-based diagnostics, predictive maintenance, and real-time monitoring pipelines. These techniques contribute to minimizing downtime and improving resilience \citep{rachapalli2024selfhealing}.
+
+Heidari et al. (2024) introduced UpLIF—an updatable learned index framework that allows efficient incremental updates without full retraining. Their design improves adaptability and scalability for constantly evolving workloads \citep{heidari2024uplif}. The adaptability of learned structures is crucial to integrate AI-driven optimizers into live systems.
+
+\section*{Summary of Research Landscape}
+Based on 2024 literature, three main directions can be identified: (1) systematic understanding of automatic schema design, (2) reinforcement learning and adaptive control for parameter tuning, and (3) fault-tolerant self-healing architectures with learned and updatable index models. These research lines collectively shape the foundations of AI-driven autonomous database systems with the aim of sustainable performance optimization and operational autonomy. The 2025 systematic review expands these findings with a longitudinal view of progress and open challenges \citep{nzenwata2025autonomous}.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
